@@ -1,0 +1,308 @@
+import React from 'react';
+import { usePlayer } from '../contexts/PlayerContext.jsx';
+
+const FullPlayer = ({ isOpen, onClose }) => {
+  const {
+    currentBook,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    playbackSpeed,
+    togglePlayPause,
+    seek,
+    skipForward,
+    skipBackward,
+    setVolume,
+    setPlaybackSpeed
+  } = usePlayer();
+
+  if (!isOpen || !currentBook) return null;
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleSeek = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newTime = percentage * duration;
+    seek(newTime);
+  };
+
+  const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'var(--bg-primary)',
+      zIndex: 1000,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'auto'
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 'var(--space-4)',
+        paddingTop: 'max(var(--space-4), var(--safe-area-top))',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <button
+          onClick={onClose}
+          className="btn-icon"
+          style={{ background: 'transparent', border: 'none' }}
+        >
+          ↓
+        </button>
+        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+          Now Playing
+        </span>
+        <div style={{ width: '44px' }} /> {/* Spacer */}
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 'var(--space-6) var(--space-4)',
+        paddingBottom: 'max(var(--space-6), var(--safe-area-bottom))'
+      }}>
+        {/* Cover Art */}
+        <div style={{
+          width: '100%',
+          maxWidth: '400px',
+          margin: '0 auto var(--space-8)',
+          aspectRatio: '1',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-xl)'
+        }}>
+          {currentBook.coverUrl ? (
+            <img
+              src={currentBook.coverUrl}
+              alt={currentBook.title}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          ) : (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              background: 'var(--bg-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '6rem'
+            }}>
+              📖
+            </div>
+          )}
+        </div>
+
+        {/* Book Info */}
+        <div style={{ 
+          textAlign: 'center',
+          marginBottom: 'var(--space-8)'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            marginBottom: 'var(--space-2)',
+            lineHeight: 1.3
+          }}>
+            {currentBook.title}
+          </h2>
+          <p style={{
+            fontSize: '1.125rem',
+            color: 'var(--text-secondary)'
+          }}>
+            {currentBook.author}
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div style={{ marginBottom: 'var(--space-6)' }}>
+          <div
+            onClick={handleSeek}
+            style={{
+              height: '6px',
+              background: 'var(--bg-tertiary)',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              marginBottom: 'var(--space-3)'
+            }}
+          >
+            <div style={{
+              height: '100%',
+              width: `${progress}%`,
+              background: 'var(--accent)',
+              borderRadius: '3px',
+              transition: 'width 0.1s linear'
+            }} />
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '0.8125rem',
+            color: 'var(--text-secondary)',
+            fontFamily: 'monospace'
+          }}>
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-8)'
+        }}>
+          <button
+            onClick={() => skipBackward(15)}
+            className="btn-icon"
+            style={{
+              width: '56px',
+              height: '56px',
+              fontSize: '0.875rem'
+            }}
+          >
+            ⏮ 15
+          </button>
+
+          <button
+            onClick={togglePlayPause}
+            className="btn-icon"
+            style={{
+              width: '72px',
+              height: '72px',
+              fontSize: '1.75rem',
+              background: 'var(--accent)',
+              color: 'var(--surface)',
+              border: 'none'
+            }}
+          >
+            {isPlaying ? '⏸' : '▶'}
+          </button>
+
+          <button
+            onClick={() => skipForward(30)}
+            className="btn-icon"
+            style={{
+              width: '56px',
+              height: '56px',
+              fontSize: '0.875rem'
+            }}
+          >
+            30 ⏭
+          </button>
+        </div>
+
+        {/* Speed & Volume */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-6)'
+        }}>
+          {/* Speed */}
+          <div>
+            <div style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              marginBottom: 'var(--space-3)'
+            }}>
+              Playback Speed
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 'var(--space-2)'
+            }}>
+              {speeds.map(speed => (
+                <button
+                  key={speed}
+                  onClick={() => setPlaybackSpeed(speed)}
+                  className="btn"
+                  style={{
+                    background: playbackSpeed === speed ? 'var(--accent)' : 'var(--surface)',
+                    color: playbackSpeed === speed ? 'var(--surface)' : 'var(--text-primary)',
+                    borderColor: playbackSpeed === speed ? 'var(--accent)' : 'var(--border)',
+                    fontSize: '0.875rem',
+                    padding: 'var(--space-2)'
+                  }}
+                >
+                  {speed}×
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Volume */}
+          <div>
+            <div style={{
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              marginBottom: 'var(--space-3)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span>Volume</span>
+              <span>{Math.round(volume * 100)}%</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)'
+            }}>
+              <span style={{ fontSize: '1.25rem' }}>🔈</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                style={{ 
+                  flex: 1,
+                  height: '6px',
+                  borderRadius: '3px'
+                }}
+              />
+              <span style={{ fontSize: '1.25rem' }}>🔊</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FullPlayer;
