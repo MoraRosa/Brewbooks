@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/brewbooks/', // Change this to your GitHub repo name
+  base: '/Brewbooks/', // Change this to your GitHub repo name
   build: {
     outDir: 'dist',
     sourcemap: false,
