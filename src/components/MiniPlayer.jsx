@@ -2,7 +2,16 @@ import React from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
 
 const MiniPlayer = ({ onExpand }) => {
-  const { currentBook, isPlaying, togglePlayPause, currentTime, duration } = usePlayer();
+  const { 
+    currentBook, 
+    isPlaying, 
+    togglePlayPause, 
+    currentTime, 
+    duration,
+    chapters,
+    currentChapterIndex,
+    getCurrentChapter
+  } = usePlayer();
 
   if (!currentBook) return null;
 
@@ -102,7 +111,10 @@ const MiniPlayer = ({ onExpand }) => {
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}>
-            {currentBook.author}
+            {chapters.length > 1 
+              ? `Chapter ${currentChapterIndex + 1}/${chapters.length} • ${currentBook.author}`
+              : currentBook.author
+            }
           </div>
         </div>
 

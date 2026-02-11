@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
+import ChapterList from './ChapterList.jsx';
 
 const FullPlayer = ({ isOpen, onClose }) => {
   const {
@@ -14,8 +15,15 @@ const FullPlayer = ({ isOpen, onClose }) => {
     skipForward,
     skipBackward,
     setVolume,
-    setPlaybackSpeed
+    setPlaybackSpeed,
+    chapters,
+    currentChapterIndex,
+    nextChapter,
+    previousChapter,
+    getCurrentChapter
   } = usePlayer();
+
+  const [showChapters, setShowChapters] = useState(false);
 
   if (!isOpen || !currentBook) return null;
 
@@ -145,6 +153,28 @@ const FullPlayer = ({ isOpen, onClose }) => {
           }}>
             {currentBook.author}
           </p>
+
+          {/* Chapter Info */}
+          {chapters.length > 1 && (
+            <button
+              onClick={() => setShowChapters(true)}
+              className="btn"
+              style={{
+                marginTop: 'var(--space-3)',
+                fontSize: '0.875rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 'var(--space-2)'
+              }}
+            >
+              📚 Chapter {currentChapterIndex + 1} of {chapters.length}
+              {getCurrentChapter()?.title && (
+                <span style={{ opacity: 0.7 }}>
+                  • {getCurrentChapter().title}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Progress */}
@@ -189,15 +219,16 @@ const FullPlayer = ({ isOpen, onClose }) => {
           marginBottom: 'var(--space-8)'
         }}>
           <button
-            onClick={() => skipBackward(15)}
+            onClick={chapters.length > 1 ? previousChapter : () => skipBackward(15)}
             className="btn-icon"
             style={{
               width: '56px',
               height: '56px',
               fontSize: '0.875rem'
             }}
+            title={chapters.length > 1 ? "Previous chapter" : "Skip back 15s"}
           >
-            ⏮ 15
+            {chapters.length > 1 ? '⏮' : '⏮ 15'}
           </button>
 
           <button
@@ -216,15 +247,16 @@ const FullPlayer = ({ isOpen, onClose }) => {
           </button>
 
           <button
-            onClick={() => skipForward(30)}
+            onClick={chapters.length > 1 ? nextChapter : () => skipForward(30)}
             className="btn-icon"
             style={{
               width: '56px',
               height: '56px',
               fontSize: '0.875rem'
             }}
+            title={chapters.length > 1 ? "Next chapter" : "Skip forward 30s"}
           >
-            30 ⏭
+            {chapters.length > 1 ? '⏭' : '30 ⏭'}
           </button>
         </div>
 
@@ -306,6 +338,12 @@ const FullPlayer = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Chapter List Sheet */}
+      <ChapterList 
+        isOpen={showChapters} 
+        onClose={() => setShowChapters(false)} 
+      />
     </div>
   );
 };

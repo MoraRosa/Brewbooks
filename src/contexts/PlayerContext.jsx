@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { storage } from '../utils/storage.js';
 import { audiobookAPI } from '../api/audiobook-api.js';
+import { fetchBookChapters } from '../utils/chapters.js';
 
 const PlayerContext = createContext();
 
@@ -14,6 +15,11 @@ export const PlayerProvider = ({ children }) => {
     return storage.getSettings().playbackSpeed || 1.0;
   });
   const [loading, setLoading] = useState(false);
+  
+  // Chapter state
+  const [chapters, setChapters] = useState([]);
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [loadingChapters, setLoadingChapters] = useState(false);
   
   const audioRef = useRef(new Audio());
 
@@ -37,8 +43,14 @@ export const PlayerProvider = ({ children }) => {
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleDurationChange = () => setDuration(audio.duration);
     const handleEnded = () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
+      // Auto-advance to next chapter
+      if (currentChapterIndex < chapters.length - 1) {
+        playChapter(currentChapterIndex + 1);
+      } else {
+        // End of book
+        setIsPlaying(false);
+        setCurrentTime(0);
+      }
     };
     const handleError = (e) => {
       console.error('Audio error:', e);
@@ -63,7 +75,7 @@ export const PlayerProvider = ({ children }) => {
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
     };
-  }, []);
+  }, [currentChapterIndex, chapters]);
 
   // Update volume
   useEffect(() => {
@@ -84,6 +96,7 @@ export const PlayerProvider = ({ children }) => {
     }
 
     setLoading(true);
+    setLoadingChapters(true);
 
     // Get audio URL if from Internet Archive and not cached
     let audioUrl = book.audioUrl;
@@ -92,23 +105,52 @@ export const PlayerProvider = ({ children }) => {
       if (!audioUrl) {
         console.error('Could not get audio URL for Internet Archive book');
         setLoading(false);
+        setLoadingChapters(false);
         return;
       }
     }
 
-    if (!audioUrl) {
-      console.error('No audio URL available');
-      setLoading(false);
-      return;
-    }
-
     // Set new book
     setCurrentBook({ ...book, audioUrl });
-    audioRef.current.src = audioUrl;
     
-    // Restore position
-    const savedPosition = storage.getPosition(book.id);
-    audioRef.current.currentTime = savedPosition;
+    // Fetch all chapters for this book
+    const chaptersResult = await fetchBookChapters({ ...book, audioUrl });
+    
+    if (chaptersResult.success && chaptersResult.chapters.length > 0) {
+      setChapters(chaptersResult.chapters);
+      setCurrentChapterIndex(0);
+      
+      // Load first chapter
+      const firstChapter = chaptersResult.chapters[0];
+      audioRef.current.src = firstChapter.audioUrl;
+      
+      // Restore position if resuming
+      const savedPosition = storage.getPosition(book.id);
+      audioRef.current.currentTime = savedPosition;
+    } else {
+      // Fallback to single file
+      if (audioUrl) {
+        setChapters([{
+          id: book.id,
+          number: 1,
+          title: book.title,
+          audioUrl: audioUrl,
+          duration: book.duration || 0
+        }]);
+        setCurrentChapterIndex(0);
+        audioRef.current.src = audioUrl;
+        
+        const savedPosition = storage.getPosition(book.id);
+        audioRef.current.currentTime = savedPosition;
+      } else {
+        console.error('No audio URL available');
+        setLoading(false);
+        setLoadingChapters(false);
+        return;
+      }
+    }
+    
+    setLoadingChapters(false);
     
     // Add to recent
     storage.addRecent(book);
@@ -151,6 +193,44 @@ export const PlayerProvider = ({ children }) => {
     seek(newTime);
   };
 
+  const playChapter = async (chapterIndex) => {
+    if (chapterIndex < 0 || chapterIndex >= chapters.length) return;
+    
+    setCurrentChapterIndex(chapterIndex);
+    const chapter = chapters[chapterIndex];
+    
+    audioRef.current.src = chapter.audioUrl;
+    audioRef.current.currentTime = 0;
+    
+    if (isPlaying) {
+      try {
+        await audioRef.current.play();
+      } catch (err) {
+        console.error('Chapter play error:', err);
+      }
+    }
+  };
+
+  const nextChapter = () => {
+    if (currentChapterIndex < chapters.length - 1) {
+      playChapter(currentChapterIndex + 1);
+    }
+  };
+
+  const previousChapter = () => {
+    // If more than 3 seconds into chapter, restart it
+    // Otherwise go to previous chapter
+    if (currentTime > 3) {
+      seek(0);
+    } else if (currentChapterIndex > 0) {
+      playChapter(currentChapterIndex - 1);
+    }
+  };
+
+  const getCurrentChapter = () => {
+    return chapters[currentChapterIndex] || null;
+  };
+
   return (
     <PlayerContext.Provider value={{
       currentBook,
@@ -160,13 +240,20 @@ export const PlayerProvider = ({ children }) => {
       volume,
       playbackSpeed,
       loading,
+      chapters,
+      currentChapterIndex,
+      loadingChapters,
       playBook,
       togglePlayPause,
       seek,
       skipForward,
       skipBackward,
       setVolume,
-      setPlaybackSpeed
+      setPlaybackSpeed,
+      playChapter,
+      nextChapter,
+      previousChapter,
+      getCurrentChapter
     }}>
       {children}
     </PlayerContext.Provider>
