@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { audiobookAPI } from '../api/audiobook-api.js';
 import { storage } from '../utils/storage.js';
 import BookCard from '../components/BookCard.jsx';
+import BookDetailModal from '../components/BookDetailModal.jsx';
 
 const HomeView = () => {
   const [featuredBooks, setFeaturedBooks] = useState([]);
   const [recentBooks, setRecentBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -26,6 +29,16 @@ const HomeView = () => {
     setRecentBooks(recent.slice(0, 10));
 
     setLoading(false);
+  };
+
+  const handleShowDetail = (book) => {
+    setSelectedBook(book);
+    setShowDetail(true);
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setSelectedBook(null);
   };
 
   return (
@@ -62,7 +75,7 @@ const HomeView = () => {
               gap: 'var(--space-3)'
             }}>
               {recentBooks.map(book => (
-                <BookCard key={book.id} book={book} />
+                <BookCard key={book.id} book={book} onShowDetail={handleShowDetail} />
               ))}
             </div>
           </section>
@@ -99,11 +112,18 @@ const HomeView = () => {
               gap: 'var(--space-3)'
             }}>
               {featuredBooks.map(book => (
-                <BookCard key={book.id} book={book} />
+                <BookCard key={book.id} book={book} onShowDetail={handleShowDetail} />
               ))}
             </div>
           )}
         </section>
+
+        {/* Book Detail Modal */}
+        <BookDetailModal
+          book={selectedBook}
+          isOpen={showDetail}
+          onClose={handleCloseDetail}
+        />
       </div>
     </div>
   );

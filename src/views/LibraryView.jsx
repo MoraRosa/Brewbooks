@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { storage } from '../utils/storage.js';
 import BookCard from '../components/BookCard.jsx';
+import BookDetailModal from '../components/BookDetailModal.jsx';
 
 const LibraryView = () => {
   const [activeTab, setActiveTab] = useState('bookmarks');
   const [bookmarks, setBookmarks] = useState([]);
   const [recent, setRecent] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     loadLibrary();
@@ -14,6 +17,18 @@ const LibraryView = () => {
   const loadLibrary = () => {
     setBookmarks(storage.getBookmarks());
     setRecent(storage.getRecent());
+  };
+
+  const handleShowDetail = (book) => {
+    setSelectedBook(book);
+    setShowDetail(true);
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setSelectedBook(null);
+    // Refresh library in case bookmark was toggled
+    loadLibrary();
   };
 
   const renderContent = () => {
@@ -49,7 +64,7 @@ const LibraryView = () => {
         gap: 'var(--space-3)'
       }}>
         {books.map(book => (
-          <BookCard key={book.id} book={book} />
+          <BookCard key={book.id} book={book} onShowDetail={handleShowDetail} />
         ))}
       </div>
     );
@@ -105,6 +120,13 @@ const LibraryView = () => {
         {/* Content */}
         {renderContent()}
       </div>
+
+      {/* Book Detail Modal */}
+      <BookDetailModal
+        book={selectedBook}
+        isOpen={showDetail}
+        onClose={handleCloseDetail}
+      />
     </div>
   );
 };

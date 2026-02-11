@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
 import { storage } from '../utils/storage.js';
 
-const BookCard = ({ book, layout = 'grid' }) => {
+const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
   const { playBook, currentBook, isPlaying } = usePlayer();
   const [isBookmarked, setIsBookmarked] = useState(
     storage.isBookmarked(book.id)
@@ -10,7 +10,14 @@ const BookCard = ({ book, layout = 'grid' }) => {
 
   const isCurrentBook = currentBook?.id === book.id;
 
-  const handlePlay = () => {
+  const handleCardClick = () => {
+    if (onShowDetail) {
+      onShowDetail(book);
+    }
+  };
+
+  const handlePlay = (e) => {
+    e.stopPropagation();
     playBook(book);
   };
 
@@ -37,7 +44,7 @@ const BookCard = ({ book, layout = 'grid' }) => {
     return (
       <div 
         className="card card-clickable"
-        onClick={handlePlay}
+        onClick={handleCardClick}
         style={{
           display: 'flex',
           gap: 'var(--space-3)',
@@ -153,7 +160,7 @@ const BookCard = ({ book, layout = 'grid' }) => {
   return (
     <div 
       className="card card-clickable"
-      onClick={handlePlay}
+      onClick={handleCardClick}
       style={{
         display: 'flex',
         flexDirection: 'column',

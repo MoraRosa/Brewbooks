@@ -68,7 +68,12 @@ const FullPlayer = ({ isOpen, onClose }) => {
         <button
           onClick={onClose}
           className="btn-icon"
-          style={{ background: 'transparent', border: 'none' }}
+          style={{ 
+            background: 'transparent', 
+            border: 'none',
+            color: 'var(--text-primary)',
+            fontSize: '1.5rem'
+          }}
         >
           ↓
         </button>

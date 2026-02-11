@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { audiobookAPI } from '../api/audiobook-api.js';
 import BookCard from '../components/BookCard.jsx';
+import BookDetailModal from '../components/BookDetailModal.jsx';
 
 const SearchView = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -28,6 +31,16 @@ const SearchView = () => {
     setQuery('');
     setResults([]);
     setHasSearched(false);
+  };
+
+  const handleShowDetail = (book) => {
+    setSelectedBook(book);
+    setShowDetail(true);
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+    setSelectedBook(null);
   };
 
   return (
@@ -151,7 +164,7 @@ const SearchView = () => {
             {!loading && results.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {results.map(book => (
-                  <BookCard key={book.id} book={book} layout="list" />
+                  <BookCard key={book.id} book={book} layout="list" onShowDetail={handleShowDetail} />
                 ))}
               </div>
             )}
@@ -171,6 +184,13 @@ const SearchView = () => {
           </div>
         )}
       </div>
+
+      {/* Book Detail Modal */}
+      <BookDetailModal
+        book={selectedBook}
+        isOpen={showDetail}
+        onClose={handleCloseDetail}
+      />
     </div>
   );
 };
