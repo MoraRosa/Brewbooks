@@ -246,13 +246,12 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
           <div style={{ marginBottom: 'var(--space-6)' }}>
             <h3
               style={{
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 marginBottom: 'var(--space-3)',
                 color: 'var(--text-secondary)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                fontSize: '0.875rem'
+                letterSpacing: '0.5px'
               }}
             >
               About This Book
@@ -304,6 +303,11 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
                   {formatDuration(book.duration)}
                 </div>
               )}
+              {book.source === 'gutenberg' && (
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', marginTop: 'var(--space-1)' }}>
+                  📖 Text version - Check LibriVox for audio
+                </div>
+              )}
             </div>
             <a
               href={book.detailsUrl}
@@ -321,19 +325,37 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
         </div>
 
         {/* Play Button */}
-        <button
-          onClick={handlePlay}
-          className="btn btn-primary"
-          style={{
-            width: '100%',
-            padding: 'var(--space-4)',
-            fontSize: '1.125rem',
-            fontWeight: 700,
-            marginBottom: 'var(--space-3)'
-          }}
-        >
-          ▶ Play Audiobook
-        </button>
+        {book.audioUrl && book.source !== 'gutenberg' && (
+          <button
+            onClick={handlePlay}
+            className="btn btn-primary"
+            style={{
+              width: '100%',
+              padding: 'var(--space-4)',
+              fontSize: '1.125rem',
+              fontWeight: 700,
+              marginBottom: 'var(--space-3)'
+            }}
+          >
+            ▶ Play Audiobook
+          </button>
+        )}
+
+        {book.source === 'gutenberg' && (
+          <div
+            style={{
+              padding: 'var(--space-4)',
+              background: 'var(--bg-tertiary)',
+              borderRadius: 'var(--radius-md)',
+              textAlign: 'center',
+              marginBottom: 'var(--space-3)',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            📖 This is a text version. Search for "{book.title}" on LibriVox for audio.
+          </div>
+        )}
 
         {/* Secondary Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>

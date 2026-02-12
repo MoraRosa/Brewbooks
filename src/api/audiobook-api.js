@@ -182,6 +182,62 @@ class OpenLibraryAPI {
   }
 }
 
+// Project Gutenberg API Service (via Gutendex)
+class ProjectGutenbergAPI {
+  constructor() {
+    this.baseUrl = 'https://gutendex.com/books';
+  }
+
+  async search({ query = '', limit = 32 }) {
+    try {
+      const params = new URLSearchParams();
+      if (query) params.append('search', query);
+
+      const response = await fetch(`${this.baseUrl}?${params}`);
+      const data = await response.json();
+
+      const books = (data.results || [])
+        .slice(0, limit)
+        .map(this.normalizeBook);
+
+      return {
+        success: true,
+        books,
+        total: data.count || books.length,
+        source: 'gutenberg'
+      };
+    } catch (error) {
+      console.error('Gutenberg error:', error);
+      return { success: false, books: [], error: error.message, source: 'gutenberg' };
+    }
+  }
+
+  normalizeBook(book) {
+    const author = book.authors?.[0]?.name || 'Unknown';
+    const subjects = book.subjects || [];
+    const genre = subjects.find(s => !s.includes('--')) || 'General';
+    const language = book.languages?.[0] || 'en';
+    const coverUrl = book.formats?.['image/jpeg'] || null;
+
+    return {
+      id: `gutenberg-${book.id}`,
+      title: book.title || 'Untitled',
+      author: author,
+      description: subjects.slice(0, 3).join('; ') || 'Classic literature from Project Gutenberg',
+      language: language,
+      genre: genre,
+      duration: 0,
+      audioUrl: null, // Gutenberg is text-only
+      coverUrl: coverUrl,
+      detailsUrl: `https://www.gutenberg.org/ebooks/${book.id}`,
+      downloads: book.download_count || 0,
+      source: 'gutenberg',
+      sourceLabel: 'Project Gutenberg (Text)',
+      _rawId: book.id.toString()
+    };
+  }
+}
+
 // Loyal Books API Service
 class LoyalBooksAPI {
   constructor() {
@@ -292,7 +348,8 @@ export class AudiobookAPI {
       librivox: new LibriVoxAPI(),
       archive: new InternetArchiveAPI(),
       openlibrary: new OpenLibraryAPI(),
-      loyalbooks: new LoyalBooksAPI()
+      loyalbooks: new LoyalBooksAPI(),
+      gutenberg: new ProjectGutenbergAPI()
     };
   }
 
