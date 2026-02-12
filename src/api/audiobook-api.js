@@ -1,6 +1,6 @@
 /**
  * Unified Audiobook API
- * Combines LibriVox, Internet Archive, and Open Library
+ * Combines LibriVox, Internet Archive, Project Gutenberg
  * All APIs are free with no authentication required
  */
 
@@ -8,7 +8,8 @@
 class LibriVoxAPI {
   constructor() {
     this.baseUrl = 'https://librivox.org/api/feed/audiobooks';
-    this.corsProxy = 'https://corsproxy.io/?';
+    // AllOrigins - reliable CORS proxy
+    this.corsProxy = 'https://api.allorigins.win/raw?url=';
   }
 
   async search({ query = '', limit = 50, offset = 0 }) {
@@ -22,18 +23,11 @@ class LibriVoxAPI {
 
       if (query) params.append('title', `^${query}`);
 
-      let url = `${this.baseUrl}?${params}`;
-      let response;
+      const url = `${this.baseUrl}?${params}`;
       
-      try {
-        response = await fetch(url);
-      } catch (error) {
-        // If direct fails, try with CORS proxy
-        console.log('Using CORS proxy for LibriVox');
-        url = `${this.corsProxy}${encodeURIComponent(url)}`;
-        response = await fetch(url);
-      }
-      
+      // Always use CORS proxy for LibriVox (they don't support CORS)
+      const proxiedUrl = `${this.corsProxy}${encodeURIComponent(url)}`;
+      const response = await fetch(proxiedUrl);
       const data = await response.json();
       
       return {
@@ -50,6 +44,7 @@ class LibriVoxAPI {
   normalizeBook(book) {
     return {
       id: `librivox-${book.id}`,
+      _rawId: book.id.toString(),
       title: book.title || 'Untitled',
       author: book.authors?.[0] 
         ? `${book.authors[0].first_name} ${book.authors[0].last_name}`.trim()
@@ -58,10 +53,10 @@ class LibriVoxAPI {
       language: book.language || 'en',
       genre: book.genres?.[0]?.name || 'General',
       duration: book.totaltimesecs || 0,
+      sections: book.num_sections || 0,
       audioUrl: book.url_zip_file || null,
       coverUrl: book.url_cover || null,
-      detailsUrl: book.url_librivox || null,
-      sections: book.num_sections || 0,
+      detailsUrl: book.url_librivox || `https://librivox.org/book/${book.id}`,
       source: 'librivox',
       sourceLabel: 'LibriVox'
     };
@@ -72,7 +67,7 @@ class LibriVoxAPI {
 class InternetArchiveAPI {
   constructor() {
     this.baseUrl = 'https://archive.org/advancedsearch.php';
-    this.corsProxy = 'https://corsproxy.io/?';
+    this.corsProxy = 'https://api.allorigins.win/raw?url=';
   }
 
   async search({ query = '', limit = 50, page = 1 }) {
@@ -90,15 +85,17 @@ class InternetArchiveAPI {
         sort: 'downloads desc'
       });
 
-      let url = `${this.baseUrl}?${params}`;
-      let response;
+      const url = `${this.baseUrl}?${params}`;
       
+      // Try direct first (Archive.org usually allows CORS)
+      let response;
       try {
         response = await fetch(url);
+        if (!response.ok) throw new Error('Direct fetch failed');
       } catch (error) {
-        console.log('Using CORS proxy for Internet Archive');
-        url = `${this.corsProxy}${encodeURIComponent(url)}`;
-        response = await fetch(url);
+        // Fallback to proxy
+        const proxiedUrl = `${this.corsProxy}${encodeURIComponent(url)}`;
+        response = await fetch(proxiedUrl);
       }
       
       const data = await response.json();
@@ -134,26 +131,33 @@ class InternetArchiveAPI {
   normalizeBook(doc) {
     return {
       id: `archive-${doc.identifier}`,
+      _rawId: doc.identifier,
       title: doc.title || 'Untitled',
-      author: Array.isArray(doc.creator) ? doc.creator[0] : (doc.creator || 'Unknown'),
+      author: doc.creator || 'Unknown',
       description: doc.description || '',
-      language: Array.isArray(doc.language) ? doc.language[0] : (doc.language || 'en'),
-      genre: Array.isArray(doc.subject) 
-        ? doc.subject.find(s => !['audiobook', 'librivox', 'audio'].includes(s.toLowerCase())) || 'General'
-        : 'General',
-      duration: 0,
+      language: doc.language || 'en',
+      genre: Array.isArray(doc.subject) ? doc.subject[0] : 'General',
+      duration: this.parseRuntime(doc.runtime),
       audioUrl: null, // Will be fetched on-demand
       coverUrl: `https://archive.org/services/img/${doc.identifier}`,
       detailsUrl: `https://archive.org/details/${doc.identifier}`,
       downloads: doc.downloads || 0,
       source: 'archive',
-      sourceLabel: 'Internet Archive',
-      _rawId: doc.identifier
+      sourceLabel: 'Internet Archive'
     };
+  }
+
+  parseRuntime(runtime) {
+    if (!runtime) return 0;
+    const match = runtime.match(/(\d+):(\d+):(\d+)/);
+    if (match) {
+      return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3]);
+    }
+    return 0;
   }
 }
 
-// Open Library API Service
+// Open Library API Service (for metadata enrichment)
 class OpenLibraryAPI {
   constructor() {
     this.baseUrl = 'https://openlibrary.org';
@@ -164,21 +168,16 @@ class OpenLibraryAPI {
       const params = new URLSearchParams({
         q: query,
         limit: limit.toString(),
-        fields: 'key,title,author_name,first_publish_year,subject,language,cover_i',
-        has_fulltext: 'true'
+        fields: 'key,title,author_name,first_publish_year,cover_i,subject'
       });
 
       const response = await fetch(`${this.baseUrl}/search.json?${params}`);
       const data = await response.json();
-      
-      // Filter for books that might have audio
-      const booksWithPotentialAudio = (data.docs || [])
-        .filter(doc => doc.subject?.some(s => s.toLowerCase().includes('audio')));
-      
+
       return {
         success: true,
-        books: booksWithPotentialAudio.map(this.normalizeBook),
-        total: booksWithPotentialAudio.length,
+        books: (data.docs || []).map(this.normalizeBook),
+        total: data.numFound || 0,
         source: 'openlibrary'
       };
     } catch (error) {
@@ -188,17 +187,19 @@ class OpenLibraryAPI {
 
   normalizeBook(doc) {
     return {
-      id: `openlibrary-${doc.key}`,
+      id: `ol-${doc.key.replace('/works/', '')}`,
       title: doc.title || 'Untitled',
       author: doc.author_name?.[0] || 'Unknown',
       description: '',
-      language: doc.language?.[0] || 'en',
+      language: 'en',
       genre: doc.subject?.[0] || 'General',
       duration: 0,
       audioUrl: null,
-      coverUrl: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null,
+      coverUrl: doc.cover_i 
+        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
+        : null,
       detailsUrl: `https://openlibrary.org${doc.key}`,
-      year: doc.first_publish_year || null,
+      pubYear: doc.first_publish_year,
       source: 'openlibrary',
       sourceLabel: 'Open Library'
     };
@@ -261,123 +262,6 @@ class ProjectGutenbergAPI {
   }
 }
 
-// Loyal Books API Service
-class LoyalBooksAPI {
-  constructor() {
-    // Use HTTPS to avoid mixed content issues
-    this.baseUrl = 'https://www.loyalbooks.com/feed/';
-    this.corsProxy = 'https://corsproxy.io/?';
-  }
-
-  async search({ query = '', limit = 50 }) {
-    try {
-      // Try direct request first
-      let url = `${this.baseUrl}book`;
-      let response;
-      
-      try {
-        response = await fetch(url);
-      } catch (error) {
-        // If direct fails, try with CORS proxy
-        console.log('Using CORS proxy for Loyal Books');
-        url = `${this.corsProxy}${encodeURIComponent(url)}`;
-        response = await fetch(url);
-      }
-      
-      const text = await response.text();
-      
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, 'text/xml');
-      const items = xml.querySelectorAll('item');
-      
-      let books = [];
-      let count = 0;
-      
-      for (let item of items) {
-        if (count >= limit) break;
-        
-        const book = this.parseRSSItem(item);
-        
-        // Filter by query if provided
-        if (query) {
-          const searchTerm = query.toLowerCase();
-          if (!book.title.toLowerCase().includes(searchTerm) && 
-              !book.author.toLowerCase().includes(searchTerm)) {
-            continue;
-          }
-        }
-        
-        books.push(book);
-        count++;
-      }
-
-      return {
-        success: true,
-        books,
-        total: books.length,
-        source: 'loyalbooks'
-      };
-    } catch (error) {
-      console.error('Loyal Books error:', error);
-      return { success: false, books: [], error: error.message, source: 'loyalbooks' };
-    }
-  }
-
-  parseRSSItem(item) {
-    const getTextContent = (selector) => {
-      const element = item.querySelector(selector);
-      return element ? element.textContent.trim() : '';
-    };
-
-    const title = getTextContent('title');
-    const description = getTextContent('description');
-    const link = getTextContent('link');
-    
-    let bookTitle = title;
-    let author = 'Unknown';
-    
-    const byIndex = title.indexOf(' by ');
-    if (byIndex !== -1) {
-      bookTitle = title.substring(0, byIndex).trim();
-      author = title.substring(byIndex + 4).trim();
-    }
-
-    const enclosure = item.querySelector('enclosure');
-    const audioUrl = enclosure ? enclosure.getAttribute('url') : null;
-
-    const id = link.split('/').filter(Boolean).pop() || Math.random().toString(36).substring(7);
-
-    return {
-      id: `loyalbooks-${id}`,
-      title: bookTitle,
-      author: author,
-      description: this.cleanDescription(description),
-      language: 'en',
-      genre: 'General',
-      duration: 0,
-      audioUrl: audioUrl,
-      coverUrl: this.extractCoverUrl(description),
-      detailsUrl: link,
-      source: 'loyalbooks',
-      sourceLabel: 'Loyal Books'
-    };
-  }
-
-  cleanDescription(desc) {
-    if (!desc) return '';
-    const withoutTags = desc.replace(/<[^>]*>/g, '');
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = withoutTags;
-    return textarea.value.trim();
-  }
-
-  extractCoverUrl(desc) {
-    if (!desc) return null;
-    const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
-    return imgMatch && imgMatch[1] ? imgMatch[1] : null;
-  }
-}
-
 // Unified API
 export class AudiobookAPI {
   constructor() {
@@ -385,8 +269,8 @@ export class AudiobookAPI {
       librivox: new LibriVoxAPI(),
       archive: new InternetArchiveAPI(),
       openlibrary: new OpenLibraryAPI(),
-      loyalbooks: new LoyalBooksAPI(),
       gutenberg: new ProjectGutenbergAPI()
+      // Note: Loyal Books temporarily disabled due to SSL/CORS issues
     };
   }
 
@@ -395,9 +279,8 @@ export class AudiobookAPI {
    */
   async searchAll(query, limit = 50) {
     const promises = [
-      this.sources.librivox.search({ query, limit: Math.floor(limit / 3) }),
-      this.sources.archive.search({ query, limit: Math.floor(limit / 3) }),
-      this.sources.loyalbooks.search({ query, limit: Math.floor(limit / 3) })
+      this.sources.librivox.search({ query, limit: Math.floor(limit / 2) }),
+      this.sources.archive.search({ query, limit: Math.floor(limit / 2) })
     ];
 
     const results = await Promise.all(promises);
