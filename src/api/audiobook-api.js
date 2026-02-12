@@ -182,13 +182,117 @@ class OpenLibraryAPI {
   }
 }
 
+// Loyal Books API Service
+class LoyalBooksAPI {
+  constructor() {
+    this.baseUrl = 'http://www.loyalbooks.com/feed/';
+  }
+
+  async search({ query = '', limit = 50 }) {
+    try {
+      const response = await fetch(`${this.baseUrl}book`);
+      const text = await response.text();
+      
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+      const items = xml.querySelectorAll('item');
+      
+      let books = [];
+      let count = 0;
+      
+      for (let item of items) {
+        if (count >= limit) break;
+        
+        const book = this.parseRSSItem(item);
+        
+        // Filter by query if provided
+        if (query) {
+          const searchTerm = query.toLowerCase();
+          if (!book.title.toLowerCase().includes(searchTerm) && 
+              !book.author.toLowerCase().includes(searchTerm)) {
+            continue;
+          }
+        }
+        
+        books.push(book);
+        count++;
+      }
+
+      return {
+        success: true,
+        books,
+        total: books.length,
+        source: 'loyalbooks'
+      };
+    } catch (error) {
+      console.error('Loyal Books error:', error);
+      return { success: false, books: [], error: error.message, source: 'loyalbooks' };
+    }
+  }
+
+  parseRSSItem(item) {
+    const getTextContent = (selector) => {
+      const element = item.querySelector(selector);
+      return element ? element.textContent.trim() : '';
+    };
+
+    const title = getTextContent('title');
+    const description = getTextContent('description');
+    const link = getTextContent('link');
+    
+    let bookTitle = title;
+    let author = 'Unknown';
+    
+    const byIndex = title.indexOf(' by ');
+    if (byIndex !== -1) {
+      bookTitle = title.substring(0, byIndex).trim();
+      author = title.substring(byIndex + 4).trim();
+    }
+
+    const enclosure = item.querySelector('enclosure');
+    const audioUrl = enclosure ? enclosure.getAttribute('url') : null;
+
+    const id = link.split('/').filter(Boolean).pop() || Math.random().toString(36).substring(7);
+
+    return {
+      id: `loyalbooks-${id}`,
+      title: bookTitle,
+      author: author,
+      description: this.cleanDescription(description),
+      language: 'en',
+      genre: 'General',
+      duration: 0,
+      audioUrl: audioUrl,
+      coverUrl: this.extractCoverUrl(description),
+      detailsUrl: link,
+      source: 'loyalbooks',
+      sourceLabel: 'Loyal Books'
+    };
+  }
+
+  cleanDescription(desc) {
+    if (!desc) return '';
+    const withoutTags = desc.replace(/<[^>]*>/g, '');
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = withoutTags;
+    return textarea.value.trim();
+  }
+
+  extractCoverUrl(desc) {
+    if (!desc) return null;
+    const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
+    return imgMatch && imgMatch[1] ? imgMatch[1] : null;
+  }
+}
+
 // Unified API
 export class AudiobookAPI {
   constructor() {
     this.sources = {
       librivox: new LibriVoxAPI(),
       archive: new InternetArchiveAPI(),
-      openlibrary: new OpenLibraryAPI()
+      openlibrary: new OpenLibraryAPI(),
+      loyalbooks: new LoyalBooksAPI()
     };
   }
 
@@ -197,8 +301,9 @@ export class AudiobookAPI {
    */
   async searchAll(query, limit = 50) {
     const promises = [
-      this.sources.librivox.search({ query, limit: Math.floor(limit / 2) }),
-      this.sources.archive.search({ query, limit: Math.floor(limit / 2) })
+      this.sources.librivox.search({ query, limit: Math.floor(limit / 3) }),
+      this.sources.archive.search({ query, limit: Math.floor(limit / 3) }),
+      this.sources.loyalbooks.search({ query, limit: Math.floor(limit / 3) })
     ];
 
     const results = await Promise.all(promises);
