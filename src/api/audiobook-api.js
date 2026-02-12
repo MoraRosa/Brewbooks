@@ -8,6 +8,7 @@
 class LibriVoxAPI {
   constructor() {
     this.baseUrl = 'https://librivox.org/api/feed/audiobooks';
+    this.corsProxy = 'https://corsproxy.io/?';
   }
 
   async search({ query = '', limit = 50, offset = 0 }) {
@@ -21,7 +22,18 @@ class LibriVoxAPI {
 
       if (query) params.append('title', `^${query}`);
 
-      const response = await fetch(`${this.baseUrl}?${params}`);
+      let url = `${this.baseUrl}?${params}`;
+      let response;
+      
+      try {
+        response = await fetch(url);
+      } catch (error) {
+        // If direct fails, try with CORS proxy
+        console.log('Using CORS proxy for LibriVox');
+        url = `${this.corsProxy}${encodeURIComponent(url)}`;
+        response = await fetch(url);
+      }
+      
       const data = await response.json();
       
       return {
@@ -60,6 +72,7 @@ class LibriVoxAPI {
 class InternetArchiveAPI {
   constructor() {
     this.baseUrl = 'https://archive.org/advancedsearch.php';
+    this.corsProxy = 'https://corsproxy.io/?';
   }
 
   async search({ query = '', limit = 50, page = 1 }) {
@@ -77,7 +90,17 @@ class InternetArchiveAPI {
         sort: 'downloads desc'
       });
 
-      const response = await fetch(`${this.baseUrl}?${params}`);
+      let url = `${this.baseUrl}?${params}`;
+      let response;
+      
+      try {
+        response = await fetch(url);
+      } catch (error) {
+        console.log('Using CORS proxy for Internet Archive');
+        url = `${this.corsProxy}${encodeURIComponent(url)}`;
+        response = await fetch(url);
+      }
+      
       const data = await response.json();
       
       return {
@@ -241,12 +264,26 @@ class ProjectGutenbergAPI {
 // Loyal Books API Service
 class LoyalBooksAPI {
   constructor() {
-    this.baseUrl = 'http://www.loyalbooks.com/feed/';
+    // Use HTTPS to avoid mixed content issues
+    this.baseUrl = 'https://www.loyalbooks.com/feed/';
+    this.corsProxy = 'https://corsproxy.io/?';
   }
 
   async search({ query = '', limit = 50 }) {
     try {
-      const response = await fetch(`${this.baseUrl}book`);
+      // Try direct request first
+      let url = `${this.baseUrl}book`;
+      let response;
+      
+      try {
+        response = await fetch(url);
+      } catch (error) {
+        // If direct fails, try with CORS proxy
+        console.log('Using CORS proxy for Loyal Books');
+        url = `${this.corsProxy}${encodeURIComponent(url)}`;
+        response = await fetch(url);
+      }
+      
       const text = await response.text();
       
       const parser = new DOMParser();
