@@ -1,6 +1,6 @@
 /**
  * Unified Audiobook API
- * Combines LibriVox, Internet Archive, Project Gutenberg
+ * Combines LibriVox, Internet Archive, and Open Library
  * All APIs are free with no authentication required
  */
 
@@ -8,8 +8,6 @@
 class LibriVoxAPI {
   constructor() {
     this.baseUrl = 'https://librivox.org/api/feed/audiobooks';
-    // AllOrigins - reliable CORS proxy
-    this.corsProxy = 'https://api.allorigins.win/raw?url=';
   }
 
   async search({ query = '', limit = 50, offset = 0 }) {
@@ -23,16 +21,12 @@ class LibriVoxAPI {
 
       if (query) params.append('title', `^${query}`);
 
-      const url = `${this.baseUrl}?${params}`;
-      
-      // Always use CORS proxy for LibriVox (they don't support CORS)
-      const proxiedUrl = `${this.corsProxy}${encodeURIComponent(url)}`;
-      const response = await fetch(proxiedUrl);
+      const response = await fetch(`${this.baseUrl}?${params}`);
       const data = await response.json();
       
       return {
         success: true,
-        books: (data.books || []).map(this.normalizeBook),
+        books: (data.books || []).map(book => this.normalizeBook(book)),
         total: data.books?.length || 0,
         source: 'librivox'
       };
@@ -67,7 +61,6 @@ class LibriVoxAPI {
 class InternetArchiveAPI {
   constructor() {
     this.baseUrl = 'https://archive.org/advancedsearch.php';
-    this.corsProxy = 'https://api.allorigins.win/raw?url=';
   }
 
   async search({ query = '', limit = 50, page = 1 }) {
@@ -85,24 +78,12 @@ class InternetArchiveAPI {
         sort: 'downloads desc'
       });
 
-      const url = `${this.baseUrl}?${params}`;
-      
-      // Try direct first (Archive.org usually allows CORS)
-      let response;
-      try {
-        response = await fetch(url);
-        if (!response.ok) throw new Error('Direct fetch failed');
-      } catch (error) {
-        // Fallback to proxy
-        const proxiedUrl = `${this.corsProxy}${encodeURIComponent(url)}`;
-        response = await fetch(proxiedUrl);
-      }
-      
+      const response = await fetch(`${this.baseUrl}?${params}`);
       const data = await response.json();
       
       return {
         success: true,
-        books: (data.response?.docs || []).map(this.normalizeBook),
+        books: (data.response?.docs || []).map(doc => this.normalizeBook(doc)),
         total: data.response?.numFound || 0,
         source: 'archive'
       };
@@ -176,7 +157,7 @@ class OpenLibraryAPI {
 
       return {
         success: true,
-        books: (data.docs || []).map(this.normalizeBook),
+        books: (data.docs || []).map(doc => this.normalizeBook(doc)),
         total: data.numFound || 0,
         source: 'openlibrary'
       };
@@ -206,71 +187,13 @@ class OpenLibraryAPI {
   }
 }
 
-// Project Gutenberg API Service (via Gutendex)
-class ProjectGutenbergAPI {
-  constructor() {
-    this.baseUrl = 'https://gutendex.com/books';
-  }
-
-  async search({ query = '', limit = 32 }) {
-    try {
-      const params = new URLSearchParams();
-      if (query) params.append('search', query);
-
-      const response = await fetch(`${this.baseUrl}?${params}`);
-      const data = await response.json();
-
-      const books = (data.results || [])
-        .slice(0, limit)
-        .map(this.normalizeBook);
-
-      return {
-        success: true,
-        books,
-        total: data.count || books.length,
-        source: 'gutenberg'
-      };
-    } catch (error) {
-      console.error('Gutenberg error:', error);
-      return { success: false, books: [], error: error.message, source: 'gutenberg' };
-    }
-  }
-
-  normalizeBook(book) {
-    const author = book.authors?.[0]?.name || 'Unknown';
-    const subjects = book.subjects || [];
-    const genre = subjects.find(s => !s.includes('--')) || 'General';
-    const language = book.languages?.[0] || 'en';
-    const coverUrl = book.formats?.['image/jpeg'] || null;
-
-    return {
-      id: `gutenberg-${book.id}`,
-      title: book.title || 'Untitled',
-      author: author,
-      description: subjects.slice(0, 3).join('; ') || 'Classic literature from Project Gutenberg',
-      language: language,
-      genre: genre,
-      duration: 0,
-      audioUrl: null, // Gutenberg is text-only
-      coverUrl: coverUrl,
-      detailsUrl: `https://www.gutenberg.org/ebooks/${book.id}`,
-      downloads: book.download_count || 0,
-      source: 'gutenberg',
-      sourceLabel: 'Project Gutenberg (Text)',
-      _rawId: book.id.toString()
-    };
-  }
-}
-
 // Unified API
 export class AudiobookAPI {
   constructor() {
     this.sources = {
       librivox: new LibriVoxAPI(),
       archive: new InternetArchiveAPI(),
-      openlibrary: new OpenLibraryAPI(),
-      gutenberg: new ProjectGutenbergAPI()
-      // Note: Loyal Books temporarily disabled due to SSL/CORS issues
+      openlibrary: new OpenLibraryAPI()
     };
   }
 
@@ -278,9 +201,9 @@ export class AudiobookAPI {
    * Search across all sources
    */
   async searchAll(query, limit = 50) {
+    // Only use Internet Archive for now (LibriVox has CORS issues in some environments)
     const promises = [
-      this.sources.librivox.search({ query, limit: Math.floor(limit / 2) }),
-      this.sources.archive.search({ query, limit: Math.floor(limit / 2) })
+      this.sources.archive.search({ query, limit })
     ];
 
     const results = await Promise.all(promises);
