@@ -42,9 +42,16 @@ export const GENRES = {
   HISTORICAL: { 
     id: 'historical-fiction', 
     name: 'Historical Fiction', 
-    icon: '⌛', 
+    icon: '🏛️', 
     svgIcon: 'landmark',
     color: '#795548' 
+  },
+  LITERARY: {
+    id: 'literary-fiction',
+    name: 'Literary Fiction',
+    icon: '✒️',
+    svgIcon: 'pen',
+    color: '#4e342e'
   },
   ADVENTURE: { 
     id: 'adventure', 
@@ -86,14 +93,14 @@ export const GENRES = {
   HISTORY: { 
     id: 'history', 
     name: 'History', 
-    icon: '🏛️', 
+    icon: '📜', 
     svgIcon: 'scroll',
     color: '#8d6e63' 
   },
   PHILOSOPHY: { 
     id: 'philosophy', 
     name: 'Philosophy', 
-    icon: '💭', 
+    icon: '💡', 
     svgIcon: 'lightbulb',
     color: '#5e35b1' 
   },
@@ -151,7 +158,7 @@ export const GENRES = {
   CLASSICS: { 
     id: 'classics', 
     name: 'Classics', 
-    icon: '📜', 
+    icon: '📚', 
     svgIcon: 'scroll',
     color: '#5d4037' 
   },
@@ -161,6 +168,64 @@ export const GENRES = {
     icon: '📝', 
     svgIcon: 'file-text',
     color: '#26a69a' 
+  },
+  
+  // Languages
+  ENGLISH: {
+    id: 'english',
+    name: 'English',
+    icon: '🇬🇧',
+    svgIcon: 'globe',
+    color: '#1976d2'
+  },
+  SPANISH: {
+    id: 'spanish',
+    name: 'Spanish',
+    icon: '🇪🇸',
+    svgIcon: 'globe',
+    color: '#d32f2f'
+  },
+  FRENCH: {
+    id: 'french',
+    name: 'French',
+    icon: '🇫🇷',
+    svgIcon: 'globe',
+    color: '#1565c0'
+  },
+  GERMAN: {
+    id: 'german',
+    name: 'German',
+    icon: '🇩🇪',
+    svgIcon: 'globe',
+    color: '#424242'
+  },
+  ITALIAN: {
+    id: 'italian',
+    name: 'Italian',
+    icon: '🇮🇹',
+    svgIcon: 'globe',
+    color: '#00897b'
+  },
+  PORTUGUESE: {
+    id: 'portuguese',
+    name: 'Portuguese',
+    icon: '🇵🇹',
+    svgIcon: 'globe',
+    color: '#388e3c'
+  },
+  CHINESE: {
+    id: 'chinese',
+    name: 'Chinese',
+    icon: '🇨🇳',
+    svgIcon: 'globe',
+    color: '#c62828'
+  },
+  JAPANESE: {
+    id: 'japanese',
+    name: 'Japanese',
+    icon: '🇯🇵',
+    svgIcon: 'globe',
+    color: '#e53935'
   }
 };
 
@@ -175,6 +240,7 @@ export const GENRE_CATEGORIES = {
       GENRES.SCIFI,
       GENRES.FANTASY,
       GENRES.HISTORICAL,
+      GENRES.LITERARY,
       GENRES.ADVENTURE,
       GENRES.HORROR,
       GENRES.HUMOR
@@ -201,6 +267,19 @@ export const GENRE_CATEGORIES = {
       GENRES.YOUNGADULT,
       GENRES.CLASSICS,
       GENRES.SHORTSTORIES
+    ]
+  },
+  languages: {
+    name: 'Languages',
+    genres: [
+      GENRES.ENGLISH,
+      GENRES.SPANISH,
+      GENRES.FRENCH,
+      GENRES.GERMAN,
+      GENRES.ITALIAN,
+      GENRES.PORTUGUESE,
+      GENRES.CHINESE,
+      GENRES.JAPANESE
     ]
   }
 };

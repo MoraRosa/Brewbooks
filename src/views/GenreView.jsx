@@ -32,11 +32,32 @@ const GenreView = () => {
       'biography': 'biography memoir',
       'philosophy': 'philosophy',
       'poetry': 'poetry poems',
-      'drama': 'drama plays'
+      'drama': 'drama plays',
+      'literary-fiction': 'literary fiction',
+      'fantasy': 'fantasy magic',
+      'horror': 'horror gothic',
+      'adventure': 'adventure',
+      'humor': 'humor comedy',
+      'non-fiction': 'nonfiction',
+      'science': 'science nature',
+      'religion': 'religion spirituality',
+      'self-help': 'self help',
+      'young-adult': 'young adult',
+      'short-stories': 'short stories',
+      // Languages - filter by language code
+      'english': 'language:eng',
+      'spanish': 'language:spa',
+      'french': 'language:fre',
+      'german': 'language:ger',
+      'italian': 'language:ita',
+      'portuguese': 'language:por',
+      'chinese': 'language:chi',
+      'japanese': 'language:jpn'
     };
     
     const searchTerm = searchTerms[genre.id] || genre.name;
-    const result = await audiobookAPI.searchSource('archive', searchTerm, 50);
+    // Increase limit to 200 books per genre
+    const result = await audiobookAPI.searchSource('archive', searchTerm, 200);
     
     if (result.success) {
       setBooks(result.books);

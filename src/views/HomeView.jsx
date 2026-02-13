@@ -46,7 +46,8 @@ const HomeView = () => {
         };
         
         const searchTerm = searchTerms[genre.id] || genre.name;
-        const result = await audiobookAPI.searchSource('archive', searchTerm, 10);
+        // Increase to 15 books per row
+        const result = await audiobookAPI.searchSource('archive', searchTerm, 15);
         
         return {
           genre: genre,
