@@ -24,14 +24,14 @@
 - [x] Auto-resume playback position
 
 ### 🚧 IN PROGRESS (Phase 2)
-- [ ] Book detail modal/page
-- [ ] Multi-chapter playback support
-- [ ] Chapter list & navigation
-- [ ] Loyal Books API integration
-- [ ] Project Gutenberg API integration
-- [ ] Genre/category system
-- [ ] Dark mode UI fixes (arrow visibility)
-- [ ] Multi-source display per book
+- [x] Book detail modal/page
+- [x] Multi-chapter playback support
+- [x] Chapter list & navigation
+- [x] Loyal Books API integration
+- [x] Project Gutenberg API integration
+- [x] Genre/category system
+- [x] Dark mode UI fixes (arrow visibility)
+- [x] Multi-source display per book
 
 ### 📋 PLANNED (Phase 3-6)
 - [ ] See detailed roadmap below

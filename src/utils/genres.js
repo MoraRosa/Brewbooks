@@ -4,32 +4,164 @@
 
 export const GENRES = {
   // Fiction
-  FICTION: { id: 'fiction', name: 'Fiction', icon: '📚', color: '#8d6e63' },
-  MYSTERY: { id: 'mystery', name: 'Mystery & Thriller', icon: '🔍', color: '#6d4c41' },
-  ROMANCE: { id: 'romance', name: 'Romance', icon: '💕', color: '#d32f2f' },
-  SCIFI: { id: 'science-fiction', name: 'Science Fiction', icon: '🚀', color: '#1976d2' },
-  FANTASY: { id: 'fantasy', name: 'Fantasy', icon: '🐉', color: '#7b1fa2' },
-  HISTORICAL: { id: 'historical-fiction', name: 'Historical Fiction', icon: '⏳', color: '#5d4037' },
-  ADVENTURE: { id: 'adventure', name: 'Adventure', icon: '🗺️', color: '#f57c00' },
-  HORROR: { id: 'horror', name: 'Horror', icon: '👻', color: '#424242' },
-  HUMOR: { id: 'humor', name: 'Humor', icon: '😄', color: '#fbc02d' },
+  FICTION: { 
+    id: 'fiction', 
+    name: 'Fiction', 
+    icon: '📚', 
+    svgIcon: 'book',
+    color: '#8d6e63' 
+  },
+  MYSTERY: { 
+    id: 'mystery', 
+    name: 'Mystery & Thriller', 
+    icon: '🔍', 
+    svgIcon: 'search',
+    color: '#424242' 
+  },
+  ROMANCE: { 
+    id: 'romance', 
+    name: 'Romance', 
+    icon: '💕', 
+    svgIcon: 'heart',
+    color: '#e91e63' 
+  },
+  SCIFI: { 
+    id: 'science-fiction', 
+    name: 'Science Fiction', 
+    icon: '🚀', 
+    svgIcon: 'rocket',
+    color: '#2196f3' 
+  },
+  FANTASY: { 
+    id: 'fantasy', 
+    name: 'Fantasy', 
+    icon: '🐉', 
+    svgIcon: 'sparkles',
+    color: '#9c27b0' 
+  },
+  HISTORICAL: { 
+    id: 'historical-fiction', 
+    name: 'Historical Fiction', 
+    icon: '⌛', 
+    svgIcon: 'landmark',
+    color: '#795548' 
+  },
+  ADVENTURE: { 
+    id: 'adventure', 
+    name: 'Adventure', 
+    icon: '🗺️', 
+    svgIcon: 'compass',
+    color: '#ff6f00' 
+  },
+  HORROR: { 
+    id: 'horror', 
+    name: 'Horror', 
+    icon: '👻', 
+    svgIcon: 'ghost',
+    color: '#212121' 
+  },
+  HUMOR: { 
+    id: 'humor', 
+    name: 'Humor', 
+    icon: '😄', 
+    svgIcon: 'smile',
+    color: '#ffc107' 
+  },
   
   // Non-Fiction
-  NONFICTION: { id: 'non-fiction', name: 'Non-Fiction', icon: '📖', color: '#5d4037' },
-  BIOGRAPHY: { id: 'biography', name: 'Biography & Memoir', icon: '👤', color: '#455a64' },
-  HISTORY: { id: 'history', name: 'History', icon: '🏛️', color: '#6d4c41' },
-  PHILOSOPHY: { id: 'philosophy', name: 'Philosophy', icon: '💭', color: '#4a148c' },
-  SCIENCE: { id: 'science', name: 'Science & Nature', icon: '🔬', color: '#00695c' },
-  RELIGION: { id: 'religion', name: 'Religion & Spirituality', icon: '🕊️', color: '#4a148c' },
-  SELFHELP: { id: 'self-help', name: 'Self-Help', icon: '🌟', color: '#c62828' },
+  NONFICTION: { 
+    id: 'non-fiction', 
+    name: 'Non-Fiction', 
+    icon: '📖', 
+    svgIcon: 'book-open',
+    color: '#6d4c41' 
+  },
+  BIOGRAPHY: { 
+    id: 'biography', 
+    name: 'Biography & Memoir', 
+    icon: '👤', 
+    svgIcon: 'user',
+    color: '#546e7a' 
+  },
+  HISTORY: { 
+    id: 'history', 
+    name: 'History', 
+    icon: '🏛️', 
+    svgIcon: 'scroll',
+    color: '#8d6e63' 
+  },
+  PHILOSOPHY: { 
+    id: 'philosophy', 
+    name: 'Philosophy', 
+    icon: '💭', 
+    svgIcon: 'lightbulb',
+    color: '#5e35b1' 
+  },
+  SCIENCE: { 
+    id: 'science', 
+    name: 'Science & Nature', 
+    icon: '🔬', 
+    svgIcon: 'flask',
+    color: '#00897b' 
+  },
+  RELIGION: { 
+    id: 'religion', 
+    name: 'Religion & Spirituality', 
+    icon: '🕊️', 
+    svgIcon: 'feather',
+    color: '#673ab7' 
+  },
+  SELFHELP: { 
+    id: 'self-help', 
+    name: 'Self-Help', 
+    icon: '🌟', 
+    svgIcon: 'star',
+    color: '#d32f2f' 
+  },
   
   // Other
-  POETRY: { id: 'poetry', name: 'Poetry', icon: '✍️', color: '#ad1457' },
-  DRAMA: { id: 'drama', name: 'Drama & Plays', icon: '🎭', color: '#6a1b9a' },
-  CHILDREN: { id: 'children', name: 'Children\'s Literature', icon: '🧒', color: '#ff6f00' },
-  YOUNGADULT: { id: 'young-adult', name: 'Young Adult', icon: '📱', color: '#0277bd' },
-  CLASSICS: { id: 'classics', name: 'Classics', icon: '📜', color: '#4e342e' },
-  SHORTSTORIES: { id: 'short-stories', name: 'Short Stories', icon: '📝', color: '#00897b' }
+  POETRY: { 
+    id: 'poetry', 
+    name: 'Poetry', 
+    icon: '✍️', 
+    svgIcon: 'feather',
+    color: '#c2185b' 
+  },
+  DRAMA: { 
+    id: 'drama', 
+    name: 'Drama & Plays', 
+    icon: '🎭', 
+    svgIcon: 'theater',
+    color: '#7b1fa2' 
+  },
+  CHILDREN: { 
+    id: 'children', 
+    name: 'Children\'s Literature', 
+    icon: '🧒', 
+    svgIcon: 'baby',
+    color: '#ff9800' 
+  },
+  YOUNGADULT: { 
+    id: 'young-adult', 
+    name: 'Young Adult', 
+    icon: '📱', 
+    svgIcon: 'users',
+    color: '#00bcd4' 
+  },
+  CLASSICS: { 
+    id: 'classics', 
+    name: 'Classics', 
+    icon: '📜', 
+    svgIcon: 'scroll',
+    color: '#5d4037' 
+  },
+  SHORTSTORIES: { 
+    id: 'short-stories', 
+    name: 'Short Stories', 
+    icon: '📝', 
+    svgIcon: 'file-text',
+    color: '#26a69a' 
+  }
 };
 
 // Organized by category

@@ -121,56 +121,75 @@ const GenreView = () => {
   // Show books for selected genre
   return (
     <div className="view">
-      {/* Sticky Header with Back Button */}
+      {/* Compact Sticky Header */}
       <div style={{
         position: 'sticky',
         top: 0,
         background: 'var(--bg-primary)',
         zIndex: 100,
-        paddingTop: 'max(var(--space-4), var(--safe-area-top))',
-        paddingBottom: 'var(--space-4)',
+        paddingTop: 'max(var(--space-3), var(--safe-area-top))',
+        paddingBottom: 'var(--space-3)',
         paddingLeft: 'var(--space-4)',
         paddingRight: 'var(--space-4)',
         borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(10px)',
         backgroundColor: 'rgba(var(--bg-primary-rgb), 0.95)'
       }}>
-        <button
-          onClick={() => setSelectedGenre(null)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--accent)',
-            fontSize: '0.9375rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: 0,
-            marginBottom: 'var(--space-3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-2)'
-          }}
-        >
-          ← Back to Genres
-        </button>
+        {/* Back Button + Count on same line */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 'var(--space-2)'
+        }}>
+          <button
+            onClick={() => setSelectedGenre(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--accent)',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-1)'
+            }}
+          >
+            ←
+          </button>
+          
+          {!loading && books.length > 0 && (
+            <span className="text-secondary" style={{ 
+              fontSize: '0.75rem',
+              lineHeight: 1
+            }}>
+              {books.length} audiobooks
+            </span>
+          )}
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-          <div style={{ fontSize: '2.5rem' }}>
+        {/* Title Row - Icon + Title */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 'var(--space-2)'
+        }}>
+          <div style={{ fontSize: '1.5rem', lineHeight: 1 }}>
             {selectedGenre.icon}
           </div>
           <h1 style={{ 
-            fontSize: '2rem',
-            fontWeight: 700
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}>
             {selectedGenre.name}
           </h1>
         </div>
-        
-        {!loading && books.length > 0 && (
-          <p className="text-secondary" style={{ fontSize: '0.9375rem' }}>
-            {books.length} audiobooks found
-          </p>
-        )}
       </div>
 
       <div className="container" style={{ paddingTop: 'var(--space-4)' }}>
