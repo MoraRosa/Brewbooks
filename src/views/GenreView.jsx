@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { audiobookAPI } from '../api/audiobook-api.js';
+import { storynoryAPI } from '../api/storynory.js';
 import BookCard from '../components/BookCard.jsx';
 import BookDetailModal from '../components/BookDetailModal.jsx';
 import { GENRES, ALL_GENRES } from '../utils/genres.js';
@@ -20,7 +21,21 @@ const GenreView = () => {
   const loadGenreBooks = async (genre) => {
     setLoading(true);
     
-    // Use Internet Archive only to avoid LibriVox CORS issues
+    let allBooks = [];
+    
+    // Special handling for Children's genre - include Storynory
+    if (genre.id === 'children') {
+      try {
+        const storynoryResult = await storynoryAPI.getFeatured(50);
+        if (storynoryResult.success) {
+          allBooks = [...storynoryResult.books];
+        }
+      } catch (error) {
+        console.error('Storynory error:', error);
+      }
+    }
+    
+    // Use Internet Archive for all genres (avoid LibriVox CORS)
     const searchTerms = {
       'mystery': 'mystery detective',
       'science-fiction': 'science fiction',
@@ -60,9 +75,10 @@ const GenreView = () => {
     const result = await audiobookAPI.searchSource('archive', searchTerm, 200);
     
     if (result.success) {
-      setBooks(result.books);
+      allBooks = [...allBooks, ...result.books];
     }
     
+    setBooks(allBooks);
     setLoading(false);
   };
 

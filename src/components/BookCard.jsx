@@ -235,6 +235,26 @@ const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
           {isBookmarked ? '🔖' : '📑'}
         </button>
 
+        {/* Original Story Badge (Storynory) */}
+        {book.isOriginal && (
+          <div style={{
+            position: 'absolute',
+            top: 'var(--space-2)',
+            left: 'var(--space-2)',
+            padding: '2px 6px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--accent)',
+            color: 'white',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            boxShadow: 'var(--shadow-md)'
+          }}>
+            Original
+          </div>
+        )}
+
         {/* Now Playing */}
         {isCurrentBook && (
           <div style={{
