@@ -20,8 +20,23 @@ const GenreView = () => {
   const loadGenreBooks = async (genre) => {
     setLoading(true);
     
-    // Search for books in this genre
-    const result = await audiobookAPI.searchAll(genre.name, 50);
+    // Use Internet Archive only to avoid LibriVox CORS issues
+    const searchTerms = {
+      'mystery': 'mystery detective',
+      'science-fiction': 'science fiction',
+      'romance': 'romance love',
+      'history': 'history historical',
+      'classics': 'classic literature',
+      'children': 'children juvenile',
+      'fiction': 'fiction novel',
+      'biography': 'biography memoir',
+      'philosophy': 'philosophy',
+      'poetry': 'poetry poems',
+      'drama': 'drama plays'
+    };
+    
+    const searchTerm = searchTerms[genre.id] || genre.name;
+    const result = await audiobookAPI.searchSource('archive', searchTerm, 50);
     
     if (result.success) {
       setBooks(result.books);
@@ -106,46 +121,59 @@ const GenreView = () => {
   // Show books for selected genre
   return (
     <div className="view">
-      <div className="container">
-        {/* Header with back button */}
-        <div style={{ marginBottom: 'var(--space-6)' }}>
-          <button
-            onClick={() => setSelectedGenre(null)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--accent)',
-              fontSize: '0.9375rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: 0,
-              marginBottom: 'var(--space-3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)'
-            }}
-          >
-            ← Back to Genres
-          </button>
+      {/* Sticky Header with Back Button */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        background: 'var(--bg-primary)',
+        zIndex: 100,
+        paddingTop: 'max(var(--space-4), var(--safe-area-top))',
+        paddingBottom: 'var(--space-4)',
+        paddingLeft: 'var(--space-4)',
+        paddingRight: 'var(--space-4)',
+        borderBottom: '1px solid var(--border)',
+        backdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(var(--bg-primary-rgb), 0.95)'
+      }}>
+        <button
+          onClick={() => setSelectedGenre(null)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--accent)',
+            fontSize: '0.9375rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: 0,
+            marginBottom: 'var(--space-3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)'
+          }}
+        >
+          ← Back to Genres
+        </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-            <div style={{ fontSize: '2.5rem' }}>
-              {selectedGenre.icon}
-            </div>
-            <h1 style={{ 
-              fontSize: '2rem',
-              fontWeight: 700
-            }}>
-              {selectedGenre.name}
-            </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+          <div style={{ fontSize: '2.5rem' }}>
+            {selectedGenre.icon}
           </div>
-          
-          {!loading && books.length > 0 && (
-            <p className="text-secondary" style={{ fontSize: '0.9375rem' }}>
-              {books.length} audiobooks found
-            </p>
-          )}
+          <h1 style={{ 
+            fontSize: '2rem',
+            fontWeight: 700
+          }}>
+            {selectedGenre.name}
+          </h1>
         </div>
+        
+        {!loading && books.length > 0 && (
+          <p className="text-secondary" style={{ fontSize: '0.9375rem' }}>
+            {books.length} audiobooks found
+          </p>
+        )}
+      </div>
+
+      <div className="container" style={{ paddingTop: 'var(--space-4)' }}>
 
         {/* Loading */}
         {loading && (
