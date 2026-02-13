@@ -325,7 +325,7 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
         </div>
 
         {/* Play Button */}
-        {book.audioUrl && book.source !== 'gutenberg' && (
+        {(book.audioUrl || book.source === 'archive' || book.source === 'librivox') && book.source !== 'gutenberg' && (
           <button
             onClick={handlePlay}
             className="btn btn-primary"

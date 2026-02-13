@@ -8,6 +8,7 @@ import FullPlayer from './components/FullPlayer.jsx';
 
 import HomeView from './views/HomeView.jsx';
 import SearchView from './views/SearchView.jsx';
+import GenreView from './views/GenreView.jsx';
 import LibraryView from './views/LibraryView.jsx';
 import SettingsView from './views/SettingsView.jsx';
 
@@ -20,6 +21,7 @@ function AppContent() {
   const views = {
     home: HomeView,
     search: SearchView,
+    genres: GenreView,
     library: LibraryView,
     settings: SettingsView
   };

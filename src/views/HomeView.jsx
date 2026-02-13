@@ -18,15 +18,20 @@ const HomeView = () => {
   const loadContent = async () => {
     setLoading(true);
     
-    // Load featured books
-    const featured = await audiobookAPI.getFeatured(20);
-    if (featured.success) {
-      setFeaturedBooks(featured.books);
-    }
+    try {
+      // Load featured books
+      const featured = await audiobookAPI.getFeatured(20);
+      
+      if (featured.success && featured.books) {
+        setFeaturedBooks(featured.books);
+      }
 
-    // Load recently played
-    const recent = storage.getRecent();
-    setRecentBooks(recent.slice(0, 10));
+      // Load recently played
+      const recent = storage.getRecent();
+      setRecentBooks(recent.slice(0, 10));
+    } catch (error) {
+      console.error('Error loading content:', error);
+    }
 
     setLoading(false);
   };

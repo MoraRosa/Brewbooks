@@ -199,11 +199,12 @@ export class AudiobookAPI {
 
   /**
    * Search across all sources
+   * Note: LibriVox may have CORS issues in some dev environments, but works in production
    */
   async searchAll(query, limit = 50) {
-    // Only use Internet Archive for now (LibriVox has CORS issues in some environments)
     const promises = [
-      this.sources.archive.search({ query, limit })
+      this.sources.librivox.search({ query, limit: Math.floor(limit / 2) }),
+      this.sources.archive.search({ query, limit: Math.floor(limit / 2) })
     ];
 
     const results = await Promise.all(promises);

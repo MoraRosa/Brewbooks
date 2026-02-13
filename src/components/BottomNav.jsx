@@ -4,7 +4,8 @@ const BottomNav = ({ activeView, onViewChange }) => {
   const navItems = [
     { id: 'home', icon: '🏠', label: 'Home' },
     { id: 'search', icon: '🔍', label: 'Search' },
-    { id: 'library', icon: '📚', label: 'Library' },
+    { id: 'genres', icon: '📚', label: 'Genres' },
+    { id: 'library', icon: '📖', label: 'Library' },
     { id: 'settings', icon: '⚙️', label: 'Settings' }
   ];
 

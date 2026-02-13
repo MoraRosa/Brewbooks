@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
 import { storage } from '../utils/storage.js';
+import { matchGenre } from '../utils/genres.js';
 
 const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
   const { playBook, currentBook, isPlaying } = usePlayer();
@@ -9,6 +10,7 @@ const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
   );
 
   const isCurrentBook = currentBook?.id === book.id;
+  const genre = matchGenre(book.genre);
 
   const handleCardClick = () => {
     if (onShowDetail) {
