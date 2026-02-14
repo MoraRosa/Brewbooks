@@ -5,8 +5,8 @@ const BottomNav = ({ activeView, onViewChange }) => {
     { id: 'home', icon: '🏠', label: 'Home' },
     { id: 'search', icon: '🔍', label: 'Search' },
     { id: 'genres', icon: '📚', label: 'Genres' },
-    { id: 'library', icon: '📖', label: 'Library' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' }
+    { id: 'podcasts', icon: '🎙️', label: 'Podcasts' },
+    { id: 'library', icon: '📖', label: 'Library' }
   ];
 
   return (

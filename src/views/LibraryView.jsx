@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { storage } from '../utils/storage.js';
 import BookCard from '../components/BookCard.jsx';
 import BookDetailModal from '../components/BookDetailModal.jsx';
+import SettingsView from './SettingsView.jsx';
 
 const LibraryView = () => {
   const [activeTab, setActiveTab] = useState('bookmarks');
@@ -9,6 +10,7 @@ const LibraryView = () => {
   const [recent, setRecent] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadLibrary();
@@ -75,13 +77,29 @@ const LibraryView = () => {
       <div className="container">
         {/* Header */}
         <div style={{ marginBottom: 'var(--space-6)' }}>
-          <h1 style={{ 
-            fontSize: '2rem',
-            fontWeight: 700,
-            marginBottom: 'var(--space-4)'
-          }}>
-            Library
-          </h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+            <h1 style={{ 
+              fontSize: '2rem',
+              fontWeight: 700
+            }}>
+              Library
+            </h1>
+            
+            {/* Settings Button */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="btn"
+              style={{
+                padding: 'var(--space-2) var(--space-3)',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-2)'
+              }}
+            >
+              ⚙️ Settings
+            </button>
+          </div>
 
           {/* Tabs */}
           <div style={{
@@ -127,6 +145,50 @@ const LibraryView = () => {
         isOpen={showDetail}
         onClose={handleCloseDetail}
       />
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000,
+            overflowY: 'auto',
+            background: 'var(--bg-primary)'
+          }}
+        >
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            background: 'var(--bg-primary)',
+            borderBottom: '1px solid var(--border)',
+            padding: 'var(--space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            zIndex: 10
+          }}>
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: 0,
+                color: 'var(--text-primary)'
+              }}
+            >
+              ←
+            </button>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Settings</h2>
+          </div>
+          <SettingsView />
+        </div>
+      )}
     </div>
   );
 };
