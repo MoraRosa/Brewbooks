@@ -7,13 +7,17 @@
 class StorynoryAPI {
   constructor() {
     this.feedUrl = 'https://www.storynory.com/feed/';
-    this.corsProxy = 'https://api.allorigins.win/raw?url=';
+    // Try cors.eu.org instead of allorigins
+    this.corsProxy = 'https://cors.eu.org/';
   }
 
   async search({ query = '', limit = 50 }) {
     try {
-      // Fetch RSS feed
-      const response = await fetch(`${this.corsProxy}${encodeURIComponent(this.feedUrl)}`);
+      // Fetch RSS feed through CORS proxy
+      const proxyUrl = `${this.corsProxy}${this.feedUrl}`;
+      console.log('Fetching Storynory from:', proxyUrl);
+      
+      const response = await fetch(proxyUrl);
       const text = await response.text();
       
       // Parse XML

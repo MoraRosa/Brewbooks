@@ -25,10 +25,13 @@ const GenreView = () => {
     
     // Special handling for Children's genre - include Storynory
     if (genre.id === 'children') {
+      console.log('Loading Storynory for children genre...');
       try {
         const storynoryResult = await storynoryAPI.getFeatured(50);
+        console.log('Storynory result:', storynoryResult);
         if (storynoryResult.success) {
           allBooks = [...storynoryResult.books];
+          console.log('Loaded', allBooks.length, 'Storynory books');
         }
       } catch (error) {
         console.error('Storynory error:', error);
