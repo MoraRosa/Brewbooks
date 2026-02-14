@@ -137,9 +137,9 @@ export async function fetchBookChapters(book) {
     return fetchLibriVoxChapters(librivoxId);
   } 
   
-  if (book.source === 'archive' || book.source === 'internet-archive') {
+  if (book.source === 'archive' || book.source === 'internet-archive' || book.source === 'storynory') {
     // Use the raw identifier
-    const identifier = book._rawId || rawId.replace('archive-', '');
+    const identifier = book._rawId || rawId.replace('archive-', '').replace('storynory-', '');
     return fetchInternetArchiveChapters(identifier);
   }
 
