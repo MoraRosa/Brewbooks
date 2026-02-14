@@ -255,6 +255,26 @@ const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
           </div>
         )}
 
+        {/* Educational Badge (Lit2Go) */}
+        {book.isEducational && !book.isOriginal && (
+          <div style={{
+            position: 'absolute',
+            top: 'var(--space-2)',
+            left: 'var(--space-2)',
+            padding: '2px 6px',
+            borderRadius: 'var(--radius-sm)',
+            background: '#1976d2',
+            color: 'white',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            boxShadow: 'var(--shadow-md)'
+          }}>
+            Educational
+          </div>
+        )}
+
         {/* Now Playing */}
         {isCurrentBook && (
           <div style={{
