@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { audiobookAPI } from '../api/audiobook-api.js';
+import { bbcRadioAPI } from '../api/bbc-radio.js';
+import { storynoryAPI } from '../api/storynory.js';
+import { lit2goAPI } from '../api/lit2go.js';
 import BookCard from '../components/BookCard.jsx';
 import BookDetailModal from '../components/BookDetailModal.jsx';
 
@@ -12,7 +15,7 @@ const SearchView = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   const handleSearch = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
     if (!query.trim()) return;
 
@@ -24,6 +27,52 @@ const SearchView = () => {
       setResults(result.books);
     }
 
+    setLoading(false);
+  };
+
+  const handleFilterSearch = async (filterType) => {
+    setLoading(true);
+    setHasSearched(true);
+    setQuery('');
+    
+    let result;
+    
+    switch(filterType) {
+      case 'bbc':
+        result = await bbcRadioAPI.getFeatured(50);
+        break;
+      case 'storynory':
+        result = await storynoryAPI.getFeatured(50);
+        break;
+      case 'lit2go':
+        result = await lit2goAPI.getFeatured(50);
+        break;
+      case 'drama':
+        result = await audiobookAPI.searchAll('drama plays', 50);
+        break;
+      case 'mystery':
+        result = await audiobookAPI.searchAll('mystery detective', 50);
+        break;
+      case 'scifi':
+        result = await audiobookAPI.searchAll('science fiction', 50);
+        break;
+      case 'children':
+        result = await audiobookAPI.searchAll('children juvenile', 50);
+        break;
+      case 'classics':
+        result = await audiobookAPI.searchAll('classic literature', 50);
+        break;
+      case 'poetry':
+        result = await audiobookAPI.searchAll('poetry poems', 50);
+        break;
+      default:
+        result = { success: false, books: [] };
+    }
+    
+    if (result.success) {
+      setResults(result.books);
+    }
+    
     setLoading(false);
   };
 
@@ -43,6 +92,21 @@ const SearchView = () => {
     setSelectedBook(null);
   };
 
+  const quickFilters = [
+    { id: 'bbc', label: '🎭 BBC Radio' },
+    { id: 'storynory', label: '⭐ Original Stories' },
+    { id: 'lit2go', label: '📚 Educational' },
+  ];
+
+  const genreFilters = [
+    { id: 'drama', label: 'Drama' },
+    { id: 'mystery', label: 'Mystery' },
+    { id: 'scifi', label: 'Sci-Fi' },
+    { id: 'children', label: 'Children' },
+    { id: 'classics', label: 'Classics' },
+    { id: 'poetry', label: 'Poetry' },
+  ];
+
   return (
     <div className="view">
       <div className="container">
@@ -57,13 +121,13 @@ const SearchView = () => {
           </h1>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} style={{ position: 'relative' }}>
+          <form onSubmit={handleSearch} style={{ position: 'relative', marginBottom: 'var(--space-4)' }}>
             <input
               type="search"
               className="input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by title or author..."
+              placeholder="Search by title, author, or keyword..."
               style={{
                 paddingRight: query ? 'var(--space-12)' : 'var(--space-4)',
                 fontSize: '1rem'
@@ -94,38 +158,61 @@ const SearchView = () => {
               </button>
             )}
           </form>
-        </div>
 
-        {/* Quick Suggestions */}
-        {!hasSearched && (
-          <div>
-            <h3 style={{ 
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-3)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              Try Searching For
-            </h3>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-              {['Shakespeare', 'Pride and Prejudice', 'Moby Dick', 'Sherlock Holmes', 'War and Peace'].map(suggestion => (
-                <button
-                  key={suggestion}
-                  onClick={() => {
-                    setQuery(suggestion);
-                    handleSearch({ preventDefault: () => {} });
-                  }}
-                  className="btn"
-                  style={{ fontSize: '0.875rem' }}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          {/* Quick Filters */}
+          {!hasSearched && (
+            <>
+              <h3 style={{ 
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-3)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Browse by Collection
+              </h3>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-5)' }}>
+                {quickFilters.map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => handleFilterSearch(filter.id)}
+                    className="btn"
+                    style={{ 
+                      fontSize: '0.875rem',
+                      padding: 'var(--space-2) var(--space-3)'
+                    }}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              <h3 style={{ 
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-3)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Browse by Genre
+              </h3>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                {genreFilters.map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => handleFilterSearch(filter.id)}
+                    className="btn"
+                    style={{ fontSize: '0.875rem' }}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Results */}
         {hasSearched && (
@@ -143,54 +230,70 @@ const SearchView = () => {
               }}>
                 {loading ? 'Searching...' : `${results.length} Results`}
               </h2>
+              <button
+                onClick={handleClear}
+                className="btn"
+                style={{ fontSize: '0.875rem' }}
+              >
+                New Search
+              </button>
             </div>
 
             {/* Loading */}
             {loading && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="card" style={{ height: '100px', display: 'flex', gap: 'var(--space-3)' }}>
-                    <div className="skeleton" style={{ width: '80px', height: '80px' }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="skeleton" style={{ height: '16px', marginBottom: 'var(--space-2)' }} />
-                      <div className="skeleton" style={{ height: '14px', width: '60%' }} />
-                    </div>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="card" style={{ height: '120px' }}>
+                    <div className="skeleton" style={{ height: '100%' }} />
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Results List */}
+            {/* Results Grid */}
             {!loading && results.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                gap: 'var(--space-3)'
+              }}>
                 {results.map(book => (
-                  <BookCard key={book.id} book={book} layout="list" onShowDetail={handleShowDetail} />
+                  <BookCard key={book.id} book={book} onShowDetail={handleShowDetail} />
                 ))}
               </div>
             )}
 
-            {/* No Results */}
+            {/* Empty State */}
             {!loading && results.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                padding: 'var(--space-10) var(--space-4)',
-                color: 'var(--text-secondary)'
+              <div className="card" style={{
+                padding: 'var(--space-8)',
+                textAlign: 'center'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-4)' }}>🔍</div>
-                <h3 style={{ marginBottom: 'var(--space-2)' }}>No results found</h3>
-                <p style={{ fontSize: '0.875rem' }}>Try a different search term</p>
+                <div style={{ fontSize: '4rem', marginBottom: 'var(--space-4)' }}>
+                  🔍
+                </div>
+                <h3 style={{ 
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  marginBottom: 'var(--space-2)'
+                }}>
+                  No Results Found
+                </h3>
+                <p className="text-secondary">
+                  Try a different search term or browse by collection
+                </p>
               </div>
             )}
           </div>
         )}
-      </div>
 
-      {/* Book Detail Modal */}
-      <BookDetailModal
-        book={selectedBook}
-        isOpen={showDetail}
-        onClose={handleCloseDetail}
-      />
+        {/* Book Detail Modal */}
+        <BookDetailModal
+          book={selectedBook}
+          isOpen={showDetail}
+          onClose={handleCloseDetail}
+        />
+      </div>
     </div>
   );
 };

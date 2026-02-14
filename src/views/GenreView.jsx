@@ -62,6 +62,54 @@ const GenreView = () => {
       }
     }
     
+    // Add BBC to Sci-Fi genre
+    if (genre.id === 'science-fiction') {
+      try {
+        const bbcResult = await bbcRadioAPI.getByCategory('scifi', 50);
+        if (bbcResult.success) {
+          allBooks = [...allBooks, ...bbcResult.books];
+        }
+      } catch (error) {
+        console.error('BBC Radio error:', error);
+      }
+    }
+    
+    // Add BBC to Humor genre
+    if (genre.id === 'humor') {
+      try {
+        const bbcResult = await bbcRadioAPI.getByCategory('comedy', 50);
+        if (bbcResult.success) {
+          allBooks = [...allBooks, ...bbcResult.books];
+        }
+      } catch (error) {
+        console.error('BBC Radio error:', error);
+      }
+    }
+    
+    // Add BBC to Mystery genre
+    if (genre.id === 'mystery') {
+      try {
+        const bbcResult = await bbcRadioAPI.search({ query: 'mystery detective', limit: 50 });
+        if (bbcResult.success) {
+          allBooks = [...allBooks, ...bbcResult.books];
+        }
+      } catch (error) {
+        console.error('BBC Radio error:', error);
+      }
+    }
+    
+    // Add BBC to History genre
+    if (genre.id === 'history') {
+      try {
+        const bbcResult = await bbcRadioAPI.getByCategory('documentary', 50);
+        if (bbcResult.success) {
+          allBooks = [...allBooks, ...bbcResult.books];
+        }
+      } catch (error) {
+        console.error('BBC Radio error:', error);
+      }
+    }
+    
     // Use Internet Archive for all genres (avoid LibriVox CORS)
     const searchTerms = {
       'mystery': 'mystery detective',
