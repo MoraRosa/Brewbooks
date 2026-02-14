@@ -11,8 +11,6 @@ class StorynoryAPI {
 
   async search({ query = '', limit = 50 }) {
     try {
-      console.log('Searching Archive.org for Storynory content...');
-      
       // Search Archive.org for Storynory uploads
       const searchQuery = query 
         ? `(storynory OR "story nory") AND (${query}) AND mediatype:audio`
@@ -30,8 +28,6 @@ class StorynoryAPI {
       const data = await response.json();
       
       const books = (data.response?.docs || []).map(doc => this.normalizeBook(doc));
-      
-      console.log('Found', books.length, 'Storynory books on Archive.org');
 
       return {
         success: true,
@@ -60,18 +56,17 @@ class StorynoryAPI {
       language: doc.language || 'en',
       genre: 'Children\'s Stories',
       duration: this.parseRuntime(doc.runtime),
-      audioUrl: null, // Fetched on-demand
+      audioUrl: null,
       coverUrl: `https://archive.org/services/img/${doc.identifier}`,
       detailsUrl: `https://archive.org/details/${doc.identifier}`,
       downloads: doc.downloads || 0,
       source: 'storynory',
       sourceLabel: 'Storynory (via Archive)',
-      isOriginal: true // Still mark as original
+      isOriginal: true
     };
   }
 
   cleanTitle(title) {
-    // Remove "Storynory - " or "Storynory: " prefix
     return title.replace(/^Storynory\s*[-:]\s*/i, '').trim();
   }
 

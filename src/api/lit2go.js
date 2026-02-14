@@ -11,8 +11,6 @@ class Lit2GoAPI {
 
   async search({ query = '', limit = 100 }) {
     try {
-      console.log('Searching Archive.org for Lit2Go content...');
-      
       // Search Archive.org for Lit2Go uploads
       const searchQuery = query 
         ? `(lit2go OR "lit 2 go" OR "lit-2-go") AND (${query}) AND mediatype:audio`
@@ -30,8 +28,6 @@ class Lit2GoAPI {
       const data = await response.json();
       
       const books = (data.response?.docs || []).map(doc => this.normalizeBook(doc));
-      
-      console.log('Found', books.length, 'Lit2Go books on Archive.org');
 
       return {
         success: true,

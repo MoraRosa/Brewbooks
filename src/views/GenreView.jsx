@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { audiobookAPI } from '../api/audiobook-api.js';
 import { storynoryAPI } from '../api/storynory.js';
 import { lit2goAPI } from '../api/lit2go.js';
+import { bbcRadioAPI } from '../api/bbc-radio.js';
 import BookCard from '../components/BookCard.jsx';
 import BookDetailModal from '../components/BookDetailModal.jsx';
 import { GENRES, ALL_GENRES } from '../utils/genres.js';
@@ -26,13 +27,10 @@ const GenreView = () => {
     
     // Special handling for Children's genre - include Storynory
     if (genre.id === 'children') {
-      console.log('Loading Storynory for children genre...');
       try {
         const storynoryResult = await storynoryAPI.getFeatured(50);
-        console.log('Storynory result:', storynoryResult);
         if (storynoryResult.success) {
           allBooks = [...storynoryResult.books];
-          console.log('Loaded', allBooks.length, 'Storynory books');
         }
       } catch (error) {
         console.error('Storynory error:', error);
@@ -42,16 +40,25 @@ const GenreView = () => {
     // Add Lit2Go for educational genres
     const educationalGenres = ['poetry', 'drama', 'classics', 'history', 'philosophy', 'science'];
     if (educationalGenres.includes(genre.id)) {
-      console.log('Loading Lit2Go for', genre.name);
       try {
         const lit2goResult = await lit2goAPI.getFeatured(50);
-        console.log('Lit2Go result:', lit2goResult);
         if (lit2goResult.success) {
           allBooks = [...allBooks, ...lit2goResult.books];
-          console.log('Added', lit2goResult.books.length, 'Lit2Go books');
         }
       } catch (error) {
         console.error('Lit2Go error:', error);
+      }
+    }
+    
+    // Add BBC Radio for Drama genre
+    if (genre.id === 'drama') {
+      try {
+        const bbcResult = await bbcRadioAPI.getByCategory('drama', 50);
+        if (bbcResult.success) {
+          allBooks = [...allBooks, ...bbcResult.books];
+        }
+      } catch (error) {
+        console.error('BBC Radio error:', error);
       }
     }
     
