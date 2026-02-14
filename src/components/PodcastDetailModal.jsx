@@ -318,7 +318,6 @@ const PodcastDetailModal = ({ podcast, isOpen, onClose }) => {
               })}
             </div>
           )}
-                     
 
           {!loading && episodes.length === 0 && (
             <div className="card" style={{

@@ -9,6 +9,7 @@ const PodcastView = () => {
   const [query, setQuery] = useState('');
   const [podcasts, setPodcasts] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [inProgressEpisodes, setInProgressEpisodes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedPodcast, setSelectedPodcast] = useState(null);
@@ -17,6 +18,7 @@ const PodcastView = () => {
   useEffect(() => {
     loadFeatured();
     loadSubscriptions();
+    loadInProgress();
   }, []);
 
   const loadFeatured = async () => {
@@ -30,6 +32,10 @@ const PodcastView = () => {
 
   const loadSubscriptions = () => {
     setSubscriptions(podcastStorage.getSubscriptions());
+  };
+
+  const loadInProgress = () => {
+    setInProgressEpisodes(podcastStorage.getInProgressEpisodes());
   };
 
   const handleSearch = async (e) => {
@@ -76,6 +82,7 @@ const PodcastView = () => {
     setShowDetail(false);
     setSelectedPodcast(null);
     loadSubscriptions();
+    loadInProgress();
   };
 
   const categories = [
@@ -114,7 +121,12 @@ const PodcastView = () => {
           }}>
             {[
               { id: 'discover', label: 'Discover' },
-              { id: 'subscriptions', label: `Subscribed (${subscriptions.length})` }
+              { 
+                id: 'subscriptions', 
+                label: subscriptions.length > 0 
+                  ? `Subscribed (${subscriptions.length})` 
+                  : 'Subscriptions'
+              }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -122,6 +134,7 @@ const PodcastView = () => {
                   setActiveTab(tab.id);
                   setHasSearched(false);
                   setQuery('');
+                  loadInProgress(); // Refresh in-progress when switching
                 }}
                 style={{
                   flex: 1,
@@ -215,6 +228,67 @@ const PodcastView = () => {
         {/* Subscriptions Content */}
         {activeTab === 'subscriptions' && (
           <>
+            {/* Continue Listening */}
+            {inProgressEpisodes.length > 0 && (
+              <div style={{ marginBottom: 'var(--space-6)' }}>
+                <h2 style={{ 
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  marginBottom: 'var(--space-4)'
+                }}>
+                  Continue Listening
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {inProgressEpisodes.slice(0, 5).map(episode => (
+                    <div
+                      key={episode.episodeId}
+                      className="card"
+                      style={{
+                        padding: 'var(--space-3)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-2)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          flex: 1
+                        }}>
+                          Episode in progress
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--accent)',
+                          fontWeight: 600
+                        }}>
+                          {Math.round(episode.percentage)}%
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div style={{
+                        width: '100%',
+                        height: '4px',
+                        background: 'var(--surface-secondary)',
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${episode.percentage}%`,
+                          height: '100%',
+                          background: 'var(--accent)',
+                          transition: 'width var(--transition-normal)'
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Your Subscriptions */}
             <h2 style={{ 
               fontSize: '1.25rem',
               fontWeight: 600,

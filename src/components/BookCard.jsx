@@ -164,20 +164,20 @@ const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
       className="card card-clickable"
       onClick={handleCardClick}
       style={{
+        padding: 0,
+        overflow: 'hidden',
+        height: '280px',
         display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        padding: 'var(--space-3)'
+        flexDirection: 'column'
       }}
     >
       {/* Cover */}
       <div style={{
         position: 'relative',
-        paddingBottom: '150%',
-        marginBottom: 'var(--space-3)',
-        borderRadius: 'var(--radius-sm)',
-        overflow: 'hidden',
-        background: 'var(--bg-tertiary)'
+        width: '100%',
+        paddingBottom: '100%', // Square like PodcastCard
+        background: 'var(--surface-secondary)',
+        overflow: 'hidden'
       }}>
         {book.coverUrl ? (
           <img
@@ -316,45 +316,44 @@ const BookCard = ({ book, layout = 'grid', onShowDetail }) => {
       </div>
 
       {/* Info */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ 
+        padding: 'var(--space-3)',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         <h3 style={{
-          fontSize: '0.9375rem',
+          fontSize: '0.875rem',
           fontWeight: 600,
           marginBottom: 'var(--space-1)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
           lineHeight: 1.3
         }}>
           {book.title}
         </h3>
 
-        <p style={{
-          fontSize: '0.8125rem',
-          color: 'var(--text-secondary)',
-          marginBottom: 'var(--space-2)'
+        <p className="text-secondary" style={{
+          fontSize: '0.75rem',
+          marginBottom: 'var(--space-2)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
         }}>
           {book.author}
         </p>
 
-        <div style={{ 
-          marginTop: 'auto',
-          display: 'flex',
-          gap: 'var(--space-2)',
-          flexWrap: 'wrap'
-        }}>
-          {book.genre && (
-            <span className="badge" style={{ fontSize: '0.6875rem' }}>
-              {book.genre}
-            </span>
-          )}
-          {book.duration > 0 && (
-            <span className="badge" style={{ fontSize: '0.6875rem' }}>
-              ⏱ {formatDuration(book.duration)}
-            </span>
-          )}
-        </div>
+        {book.duration > 0 && (
+          <p className="text-tertiary" style={{
+            fontSize: '0.6875rem',
+            marginTop: 'auto'
+          }}>
+            ⏱ {formatDuration(book.duration)}
+          </p>
+        )}
       </div>
     </div>
   );

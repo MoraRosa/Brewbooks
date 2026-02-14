@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { storage } from '../utils/storage.js';
+import { podcastStorage } from '../utils/podcastStorage.js';
 import { audiobookAPI } from '../api/audiobook-api.js';
 import { fetchBookChapters } from '../utils/chapters.js';
 
@@ -23,18 +24,29 @@ export const PlayerProvider = ({ children }) => {
   
   const audioRef = useRef(new Audio());
 
-  // Save position periodically
+  // Save position periodically (for both audiobooks and podcasts)
   useEffect(() => {
     if (!currentBook || !isPlaying) return;
 
     const interval = setInterval(() => {
-      if (currentTime > 0) {
+      if (currentTime > 0 && duration > 0) {
+        // Save audiobook position
         storage.setPosition(currentBook.id, currentTime);
+        
+        // Save podcast episode progress
+        if (currentBook.isPodcast) {
+          podcastStorage.saveEpisodeProgress(currentBook.id, currentTime, duration);
+          
+          // Auto-mark as played when 95% complete
+          if ((currentTime / duration) >= 0.95) {
+            podcastStorage.markAsPlayed(currentBook.id);
+          }
+        }
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentBook, currentTime, isPlaying]);
+  }, [currentBook, currentTime, duration, isPlaying]);
 
   // Audio event listeners
   useEffect(() => {
