@@ -23,7 +23,7 @@ const FullPlayer = ({ isOpen, onClose }) => {
     getCurrentChapter
   } = usePlayer();
 
-  const [showChapters, setShowChapters] = useState(false);
+  const [showChapters, setShowChapters] = useState(true); // Default open!
 
   if (!isOpen || !currentBook) return null;
 
@@ -154,10 +154,10 @@ const FullPlayer = ({ isOpen, onClose }) => {
             {currentBook.author}
           </p>
 
-          {/* Chapter Info */}
-          {chapters.length > 1 && (
+          {/* Chapter/Episode Info */}
+          {chapters.length > 0 && (
             <button
-              onClick={() => setShowChapters(true)}
+              onClick={() => setShowChapters(!showChapters)}
               className="btn"
               style={{
                 marginTop: 'var(--space-3)',
@@ -167,12 +167,21 @@ const FullPlayer = ({ isOpen, onClose }) => {
                 gap: 'var(--space-2)'
               }}
             >
-              📚 Chapter {currentChapterIndex + 1} of {chapters.length}
-              {getCurrentChapter()?.title && (
-                <span style={{ opacity: 0.7 }}>
-                  • {getCurrentChapter().title}
-                </span>
+              {chapters.length > 1 ? (
+                <>
+                  📚 Chapter {currentChapterIndex + 1} of {chapters.length}
+                  {getCurrentChapter()?.title && (
+                    <span style={{ opacity: 0.7 }}>
+                      • {getCurrentChapter().title}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>📚 {currentBook.isPodcast ? 'Episode' : 'Chapter'}</>
               )}
+              <span style={{ marginLeft: 'auto' }}>
+                {showChapters ? '▼' : '▶'}
+              </span>
             </button>
           )}
         </div>
@@ -339,11 +348,87 @@ const FullPlayer = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Chapter List Sheet */}
-      <ChapterList 
-        isOpen={showChapters} 
-        onClose={() => setShowChapters(false)} 
-      />
+      {/* Inline Chapter List */}
+      {showChapters && chapters.length > 0 && (
+        <div style={{
+          padding: 'var(--space-4)',
+          paddingTop: 0,
+          maxHeight: '40vh',
+          overflowY: 'auto'
+        }}>
+          <h3 style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            marginBottom: 'var(--space-3)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            {currentBook.isPodcast ? 'Episode' : `${chapters.length} Chapters`}
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {chapters.map((chapter, index) => {
+              const isActive = index === currentChapterIndex;
+              const formatDuration = (seconds) => {
+                if (!seconds) return '';
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                if (hours > 0) return `${hours}h ${minutes}m`;
+                return `${minutes}m`;
+              };
+
+              return (
+                <button
+                  key={chapter.id}
+                  onClick={() => {
+                    playChapter(index);
+                  }}
+                  className="card card-clickable"
+                  style={{
+                    padding: 'var(--space-3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-3)',
+                    background: isActive ? 'var(--accent)' : 'var(--surface)',
+                    color: isActive ? 'var(--surface)' : 'var(--text-primary)',
+                    border: 'none',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{
+                    fontSize: '1.5rem',
+                    flexShrink: 0
+                  }}>
+                    {isActive ? '▶' : `${index + 1}`}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      marginBottom: '2px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {chapter.title}
+                    </div>
+                    {chapter.duration > 0 && (
+                      <div style={{
+                        fontSize: '0.75rem',
+                        opacity: 0.7
+                      }}>
+                        {formatDuration(chapter.duration)}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
