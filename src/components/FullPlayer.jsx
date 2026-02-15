@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
+import { podcastAPI } from '../api/podcast.js';
+import { podcastStorage } from '../utils/podcastStorage.js';
 import ChapterList from './ChapterList.jsx';
 
 const FullPlayer = ({ isOpen, onClose }) => {
@@ -20,10 +22,32 @@ const FullPlayer = ({ isOpen, onClose }) => {
     currentChapterIndex,
     nextChapter,
     previousChapter,
-    getCurrentChapter
+    getCurrentChapter,
+    playBook
   } = usePlayer();
 
   const [showChapters, setShowChapters] = useState(true); // Default open!
+  const [podcastEpisodes, setPodcastEpisodes] = useState([]);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+
+  // Load podcast episodes when opening player for a podcast
+  useEffect(() => {
+    if (isOpen && currentBook?.isPodcast && currentBook.podcastId) {
+      loadPodcastEpisodes();
+    }
+  }, [isOpen, currentBook?.isPodcast, currentBook?.podcastId]);
+
+  const loadPodcastEpisodes = async () => {
+    if (!currentBook?.podcastId) return;
+    
+    setLoadingEpisodes(true);
+    const result = await podcastAPI.getPodcastById(currentBook.podcastId);
+    
+    if (result.success) {
+      setPodcastEpisodes(result.episodes || []);
+    }
+    setLoadingEpisodes(false);
+  };
 
   if (!isOpen || !currentBook) return null;
 
@@ -155,7 +179,7 @@ const FullPlayer = ({ isOpen, onClose }) => {
           </p>
 
           {/* Chapter/Episode Info */}
-          {chapters.length > 0 && (
+          {(chapters.length > 0 || currentBook.isPodcast) && (
             <button
               onClick={() => setShowChapters(!showChapters)}
               className="btn"
@@ -167,7 +191,12 @@ const FullPlayer = ({ isOpen, onClose }) => {
                 gap: 'var(--space-2)'
               }}
             >
-              {chapters.length > 1 ? (
+              {currentBook.isPodcast ? (
+                <>
+                  🎙️ Episodes
+                  {podcastEpisodes.length > 0 && ` (${podcastEpisodes.length})`}
+                </>
+              ) : chapters.length > 1 ? (
                 <>
                   📚 Chapter {currentChapterIndex + 1} of {chapters.length}
                   {getCurrentChapter()?.title && (
@@ -177,7 +206,7 @@ const FullPlayer = ({ isOpen, onClose }) => {
                   )}
                 </>
               ) : (
-                <>📚 {currentBook.isPodcast ? 'Episode' : 'Chapter'}</>
+                <>📚 Chapters</>
               )}
               <span style={{ marginLeft: 'auto' }}>
                 {showChapters ? '▼' : '▶'}
@@ -185,6 +214,189 @@ const FullPlayer = ({ isOpen, onClose }) => {
             </button>
           )}
         </div>
+
+        {/* Inline Chapter/Episode List */}
+        {showChapters && (
+          <div style={{
+            marginBottom: 'var(--space-6)',
+            marginTop: 'var(--space-4)',
+            maxHeight: '40vh',
+            overflowY: 'auto'
+          }}>
+            {/* Loading */}
+            {currentBook.isPodcast && loadingEpisodes && (
+              <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                Loading episodes...
+              </div>
+            )}
+
+            {/* Podcast Episodes */}
+            {currentBook.isPodcast && !loadingEpisodes && podcastEpisodes.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                {podcastEpisodes.map((episode) => {
+                  const isActive = episode.id === currentBook.id;
+                  const isPlayed = podcastStorage.isPlayed(episode.id);
+                  const progress = podcastStorage.getEpisodeProgress(episode.id);
+
+                  return (
+                    <button
+                      key={episode.id}
+                      onClick={() => {
+                        const episodeAsBook = {
+                          id: episode.id,
+                          title: episode.title,
+                          author: currentBook.author,
+                          coverUrl: episode.coverUrl || currentBook.coverUrl,
+                          audioUrl: episode.audioUrl,
+                          duration: episode.duration,
+                          source: 'podcast',
+                          isPodcast: true,
+                          podcastId: currentBook.podcastId,
+                          podcastTitle: currentBook.podcastTitle
+                        };
+                        playBook(episodeAsBook);
+                      }}
+                      className="card card-clickable"
+                      style={{
+                        padding: 'var(--space-3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        background: isActive ? 'var(--accent)' : 'var(--surface)',
+                        color: isActive ? 'var(--surface)' : 'var(--text-primary)',
+                        border: 'none',
+                        textAlign: 'left',
+                        opacity: isPlayed ? 0.6 : 1
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: isActive ? 'var(--surface)' : (isPlayed ? 'var(--surface-secondary)' : 'var(--accent)'),
+                        color: isActive ? 'var(--accent)' : (isPlayed ? 'var(--text-tertiary)' : 'white'),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        fontSize: '1.125rem'
+                      }}>
+                        {isPlayed ? '✓' : (isActive ? '▶' : '▶')}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          marginBottom: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          textDecoration: isPlayed ? 'line-through' : 'none'
+                        }}>
+                          {episode.title}
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          opacity: 0.7,
+                          display: 'flex',
+                          gap: 'var(--space-2)',
+                          alignItems: 'center'
+                        }}>
+                          {episode.releaseDate && (
+                            <span>{new Date(episode.releaseDate).toLocaleDateString()}</span>
+                          )}
+                          {progress && !isPlayed && (
+                            <span style={{ color: 'var(--accent)' }}>
+                              {Math.round(progress.percentage)}% complete
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Audiobook Chapters */}
+            {!currentBook.isPodcast && chapters.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                {chapters.map((chapter, index) => {
+                  const isActive = index === currentChapterIndex;
+                  const formatDuration = (seconds) => {
+                    if (!seconds) return '';
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    if (hours > 0) return `${hours}h ${minutes}m`;
+                    return `${minutes}m`;
+                  };
+
+                  return (
+                    <button
+                      key={chapter.id}
+                      onClick={() => {
+                        playChapter(index);
+                      }}
+                      className="card card-clickable"
+                      style={{
+                        padding: 'var(--space-3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        background: isActive ? 'var(--accent)' : 'var(--surface)',
+                        color: isActive ? 'var(--surface)' : 'var(--text-primary)',
+                        border: 'none',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{
+                        fontSize: '1.5rem',
+                        flexShrink: 0
+                      }}>
+                        {isActive ? '▶' : `${index + 1}`}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          marginBottom: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {chapter.title}
+                        </div>
+                        {chapter.duration > 0 && (
+                          <div style={{
+                            fontSize: '0.75rem',
+                            opacity: 0.7
+                          }}>
+                            {formatDuration(chapter.duration)}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loadingEpisodes && !currentBook.isPodcast && chapters.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                No chapters available
+              </div>
+            )}
+
+            {!loadingEpisodes && currentBook.isPodcast && podcastEpisodes.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                {currentBook.podcastId ? 'No episodes available' : 'Resume from podcast page to see all episodes'}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Progress */}
         <div style={{ marginBottom: 'var(--space-6)' }}>
@@ -347,88 +559,6 @@ const FullPlayer = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-
-      {/* Inline Chapter List */}
-      {showChapters && chapters.length > 0 && (
-        <div style={{
-          padding: 'var(--space-4)',
-          paddingTop: 0,
-          maxHeight: '40vh',
-          overflowY: 'auto'
-        }}>
-          <h3 style={{
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: 'var(--text-secondary)',
-            marginBottom: 'var(--space-3)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            {currentBook.isPodcast ? 'Episode' : `${chapters.length} Chapters`}
-          </h3>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {chapters.map((chapter, index) => {
-              const isActive = index === currentChapterIndex;
-              const formatDuration = (seconds) => {
-                if (!seconds) return '';
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                if (hours > 0) return `${hours}h ${minutes}m`;
-                return `${minutes}m`;
-              };
-
-              return (
-                <button
-                  key={chapter.id}
-                  onClick={() => {
-                    playChapter(index);
-                  }}
-                  className="card card-clickable"
-                  style={{
-                    padding: 'var(--space-3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                    background: isActive ? 'var(--accent)' : 'var(--surface)',
-                    color: isActive ? 'var(--surface)' : 'var(--text-primary)',
-                    border: 'none',
-                    textAlign: 'left'
-                  }}
-                >
-                  <div style={{
-                    fontSize: '1.5rem',
-                    flexShrink: 0
-                  }}>
-                    {isActive ? '▶' : `${index + 1}`}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      marginBottom: '2px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {chapter.title}
-                    </div>
-                    {chapter.duration > 0 && (
-                      <div style={{
-                        fontSize: '0.75rem',
-                        opacity: 0.7
-                      }}>
-                        {formatDuration(chapter.duration)}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

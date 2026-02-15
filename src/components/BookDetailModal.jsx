@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { usePlayer } from '../contexts/PlayerContext.jsx';
 import { storage } from '../utils/storage.js';
 import { audiobookAPI } from '../api/audiobook-api.js';
+import { fetchBookChapters } from '../utils/chapters.js';
 
 const BookDetailModal = ({ book, isOpen, onClose }) => {
-  const { playBook } = usePlayer();
+  const { playBook, playChapter } = usePlayer();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [fullDetails, setFullDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [chapters, setChapters] = useState([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [showChapters, setShowChapters] = useState(true); // Expanded by default
 
   useEffect(() => {
     if (book) {
@@ -18,15 +22,23 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen && book) {
       loadFullDetails();
+      loadChapters();
     }
   }, [isOpen, book]);
 
   const loadFullDetails = async () => {
     setLoading(true);
-    // For now, use the book data we have
-    // In future, fetch additional metadata from Open Library
     setFullDetails(book);
     setLoading(false);
+  };
+
+  const loadChapters = async () => {
+    setLoadingChapters(true);
+    const result = await fetchBookChapters(book);
+    if (result.success) {
+      setChapters(result.chapters || []);
+    }
+    setLoadingChapters(false);
   };
 
   const toggleBookmark = () => {
@@ -268,6 +280,125 @@ const BookDetailModal = ({ book, isOpen, onClose }) => {
                 ? book.description.substring(0, 500) + '...'
                 : book.description}
             </p>
+          </div>
+        )}
+
+        {/* Chapters Section */}
+        {chapters.length > 0 && (
+          <div style={{ marginBottom: 'var(--space-6)' }}>
+            <button
+              onClick={() => setShowChapters(!showChapters)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                marginBottom: 'var(--space-3)',
+                cursor: 'pointer'
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                Chapters ({chapters.length})
+              </h3>
+              <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                {showChapters ? '▼' : '▶'}
+              </span>
+            </button>
+
+            {loadingChapters && (
+              <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                Loading chapters...
+              </div>
+            )}
+
+            {showChapters && !loadingChapters && (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 'var(--space-2)',
+                maxHeight: '400px',
+                overflowY: 'auto'
+              }}>
+                {chapters.map((chapter, index) => {
+                  const formatChapterDuration = (seconds) => {
+                    if (!seconds) return '';
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    if (hours > 0) return `${hours}h ${minutes}m`;
+                    return `${minutes}m`;
+                  };
+
+                  return (
+                    <button
+                      key={chapter.id}
+                      onClick={() => {
+                        playBook(book);
+                        // Small delay to let player initialize
+                        setTimeout(() => playChapter(index), 100);
+                        onClose();
+                      }}
+                      className="card card-clickable"
+                      style={{
+                        padding: 'var(--space-3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        background: 'var(--surface)',
+                        border: 'none',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{
+                        fontSize: '1.25rem',
+                        flexShrink: 0,
+                        color: 'var(--text-secondary)'
+                      }}>
+                        {index + 1}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          marginBottom: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {chapter.title}
+                        </div>
+                        {chapter.duration > 0 && (
+                          <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-tertiary)'
+                          }}>
+                            {formatChapterDuration(chapter.duration)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{
+                        fontSize: '1.5rem',
+                        color: 'var(--text-tertiary)'
+                      }}>
+                        ▶
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

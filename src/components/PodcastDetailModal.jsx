@@ -50,7 +50,9 @@ const PodcastDetailModal = ({ podcast, isOpen, onClose }) => {
       audioUrl: episode.audioUrl,
       duration: episode.duration,
       source: 'podcast',
-      isPodcast: true
+      isPodcast: true,
+      podcastId: podcast.podcastId, // Add this!
+      podcastTitle: podcast.title    // Add this!
     };
     
     playBook(episodeAsBook);
